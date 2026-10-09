@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Chat module for an AI-imposter social-deduction game",
-  "engines": { "node": ">=22.9" },
+  "engines": {
+    "node": ">=22.9"
+  },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env server/src/index.ts",
     "start": "node itb/server/server.js",
@@ -14,15 +16,26 @@
     "logs:export": "tsx scripts/export.ts",
     "logs:summary": "tsx scripts/summary.ts",
     "client:dev": "npm --prefix client run dev",
-    "client:build": "npm --prefix client run build"
+    "client:build": "npm --prefix client run build",
+    "lint": "eslint .",
+    "format": "prettier --write server shared scripts tests client/src",
+    "format:check": "prettier --check server shared scripts tests client/src",
+    "test:itb": "node itb/tools/test-rules.js && node itb/tools/test-net.js",
+    "test:all": "npm test && npm run test:itb",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:all"
   },
   "dependencies": {
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^22.10.0",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "prettier": "^3.9.9",
     "socket.io-client": "^4.8.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.71.1"
   }
 }

@@ -37,7 +37,7 @@ Plain HTML5 canvas + DOM. Offline vs bots by double-clicking `index.html` (file:
 | js/client/ui-flow.js, css/flow.css, tools/flowtest.html | flow (role intro, meeting/voting, ejection, killed overlay, end screen) |
 | js/client/tasks/tasks-a.js | tasks-a |
 | js/client/tasks/tasks-b.js | tasks-b |
-| js/client/tasks/tasks-c.js, js/client/tasks/sabotage.js | tasks-c |
+| js/client/tasks/kit.js, js/client/tasks/tasks-c.js, js/client/tasks/sabotage.js | tasks-c |
 | js/client/main.js, js/client/net.js, server/server.js, server/ws.js, package.json, start-server.bat, README.md | app |
 
 Script load order is fixed in `index.html` (core → bots → audio → art → props → renderer → input → tasks → net → hud → ui-menu → ui-flow → main).
@@ -412,4 +412,4 @@ when all tasks are done. Impostors never kill each other (not implemented; the d
 - `analytics.js`: `logs/chat.jsonl` (round answers with author type + level + delay + fallback flag; meeting results with votes per AI). `node tools/chat-summary.js` prints per-level stats.
 - Hooks (server only): `game.hooks.qaAnswer / qaRound / meetingResult`.
 
-**Tests.** `node tools/test-rules.js` (rules, Q&A, gating, provider, director), `node tools/test-net.js` (server + protocol), `node tools/sim.js 3 7 --chat` (headless bot games), `node tools/live-test.js` and `node tools/live-room.js` (real LLMs). `tools/test-core.js` is legacy: its fixtures assume human impostors, so several of its role-based tests fail by design.
+**Tests.** `npm test` runs `node tools/test-rules.js` and `node tools/test-net.js`. Individually: `node tools/test-rules.js` (rules, Q&A, gating, provider, director), `node tools/test-net.js` (server + protocol), `node tools/sim.js 3 7 --chat` (headless bot games), `node tools/live-test.js` and `node tools/live-room.js` (real LLMs). `tools/test-core.js` is legacy: its fixtures assume human impostors, so several of its role-based tests fail by design.

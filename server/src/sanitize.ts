@@ -14,7 +14,7 @@ export function stripUnsafe(input: string): string {
   let s = input.normalize('NFC');
   s = s.replace(SPECIAL_TOKENS, ' ');
   // repeat so nested tags like <<b>b> cannot survive a single pass
-  for (let prev = ''; prev !== s; ) {
+  for (let prev = ''; prev !== s;) {
     prev = s;
     s = s.replace(TAGS, ' ');
   }
@@ -22,16 +22,14 @@ export function stripUnsafe(input: string): string {
   s = s.replace(CODE_FENCE, ' ').replace(HEADING_ROLE, ' ');
   s = s.replace(CONTROL, ' ').replace(/\s+/g, ' ').trim();
   // role prefixes ("system: ...") may be stacked
-  for (let prev = ''; prev !== s; ) {
+  for (let prev = ''; prev !== s;) {
     prev = s;
     s = s.replace(ROLE_PREFIX, '');
   }
   return s.trim();
 }
 
-export type SanitizeResult =
-  | { ok: true; text: string }
-  | { ok: false; code: 'bad_request' | 'empty' | 'too_long' };
+export type SanitizeResult = { ok: true; text: string } | { ok: false; code: 'bad_request' | 'empty' | 'too_long' };
 
 export function sanitizeAnswer(raw: unknown, maxChars: number): SanitizeResult {
   if (typeof raw !== 'string') return { ok: false, code: 'bad_request' };

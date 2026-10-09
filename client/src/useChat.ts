@@ -33,17 +33,37 @@ export interface ChatState {
 }
 
 const initial: ChatState = {
-  status: 'connecting', me: null, phase: 'IDLE', round: 0, question: null, turnOrder: [], answers: [], skipped: [],
-  currentTurn: null, typingUntil: {}, maxChars: 200, canAnswer: true, aiLevel: null, error: null,
+  status: 'connecting',
+  me: null,
+  phase: 'IDLE',
+  round: 0,
+  question: null,
+  turnOrder: [],
+  answers: [],
+  skipped: [],
+  currentTurn: null,
+  typingUntil: {},
+  maxChars: 200,
+  canAnswer: true,
+  aiLevel: null,
+  error: null,
 };
 
 const TYPING_TTL_MS = 3500;
 const tokenKey = (roomId: string) => `chat-token:${roomId}`;
 const readToken = (roomId: string) => {
-  try { return sessionStorage.getItem(tokenKey(roomId)) ?? undefined; } catch { return undefined; }
+  try {
+    return sessionStorage.getItem(tokenKey(roomId)) ?? undefined;
+  } catch {
+    return undefined;
+  }
 };
 const saveToken = (roomId: string, token: string) => {
-  try { sessionStorage.setItem(tokenKey(roomId), token); } catch { /* storage unavailable */ }
+  try {
+    sessionStorage.setItem(tokenKey(roomId), token);
+  } catch {
+    /* storage unavailable */
+  }
 };
 
 export function useChat(serverUrl: string, roomId: string, name: string) {
@@ -62,9 +82,16 @@ export function useChat(serverUrl: string, roomId: string, name: string) {
       return { playerId: t.playerId, deadline: t.deadline - skew.current };
     };
     const applySnapshot = (snap: ChatSnapshot): Partial<ChatState> => ({
-      phase: snap.phase, round: snap.round, question: snap.question, turnOrder: snap.turnOrder,
-      answers: snap.answers, skipped: snap.skipped, maxChars: snap.maxChars, canAnswer: snap.canAnswer,
-      currentTurn: snap.currentTurn ? applyTurn(snap.currentTurn) : null, typingUntil: {},
+      phase: snap.phase,
+      round: snap.round,
+      question: snap.question,
+      turnOrder: snap.turnOrder,
+      answers: snap.answers,
+      skipped: snap.skipped,
+      maxChars: snap.maxChars,
+      canAnswer: snap.canAnswer,
+      currentTurn: snap.currentTurn ? applyTurn(snap.currentTurn) : null,
+      typingUntil: {},
     });
 
     const join = () =>
@@ -73,15 +100,28 @@ export function useChat(serverUrl: string, roomId: string, name: string) {
           return patch({ status: 'failed', error: res.error?.message ?? 'Could not join' });
         }
         if (res.token) saveToken(roomId, res.token);
-        patch({ status: 'joined', error: null, aiLevel: res.aiLevel ?? null, me: { playerId: res.playerId, name: res.name ?? name }, ...applySnapshot(res.snapshot) });
+        patch({
+          status: 'joined',
+          error: null,
+          aiLevel: res.aiLevel ?? null,
+          me: { playerId: res.playerId, name: res.name ?? name },
+          ...applySnapshot(res.snapshot),
+        });
       });
 
     socket.on('connect', join);
     socket.on('disconnect', () => patch({ status: 'connecting' }));
     socket.on('round_started', (p: RoundStartedPayload) =>
       patch({
-        phase: 'QUESTION_SHOWN', round: p.round, question: p.question, turnOrder: p.turnOrder, answers: [], skipped: [],
-        currentTurn: null, typingUntil: {}, maxChars: p.maxChars,
+        phase: 'QUESTION_SHOWN',
+        round: p.round,
+        question: p.question,
+        turnOrder: p.turnOrder,
+        answers: [],
+        skipped: [],
+        currentTurn: null,
+        typingUntil: {},
+        maxChars: p.maxChars,
       }),
     );
     socket.on('turn_started', (p: TurnStartedPayload) => patch({ phase: 'PLAYER_TURN', currentTurn: applyTurn(p) }));
@@ -90,7 +130,9 @@ export function useChat(serverUrl: string, roomId: string, name: string) {
     );
     socket.on('answer_posted', (p: AnswerPostedPayload) =>
       patch((s) => ({
-        answers: s.answers.some((a) => a.playerId === p.playerId) ? s.answers : [...s.answers, p].sort((a, b) => a.order - b.order),
+        answers: s.answers.some((a) => a.playerId === p.playerId)
+          ? s.answers
+          : [...s.answers, p].sort((a, b) => a.order - b.order),
         typingUntil: { ...s.typingUntil, [p.playerId]: 0 },
         currentTurn: s.currentTurn?.playerId === p.playerId ? null : s.currentTurn,
       })),

@@ -49,7 +49,15 @@ const ok = (name: string) => {
   assert.equal(lowerFor('ПРИВЕТ', 'ru'), 'привет');
   ok('lowercasing follows the match language (no combining dot in az)');
 
-  for (const s of ['As an AI, I think so', "I'm a bot", 'I’m the impostor', 'mən botam', 'Mən süni intellektəm', 'я бот', 'Я — ИИ'])
+  for (const s of [
+    'As an AI, I think so',
+    "I'm a bot",
+    'I’m the impostor',
+    'mən botam',
+    'Mən süni intellektəm',
+    'я бот',
+    'Я — ИИ',
+  ])
     assert.equal(cleanModelOutput(s, 100), null, s);
   for (const s of ['the impostor vented in nav', "I'm not a bot", 'я не бот', 'saxtakar qırmızıdır', 'botanika'])
     assert.equal(cleanModelOutput(s, 100), s, s);
@@ -59,16 +67,38 @@ const ok = (name: string) => {
   const itbQa = fs.readFileSync(path.join(import.meta.dirname, '..', 'itb', 'js', 'core', 'qa.js'), 'utf8');
   const sanitizeSrc = fs.readFileSync(path.join(import.meta.dirname, '..', 'server', 'src', 'sanitize.ts'), 'utf8');
   const controlOf = (src: string) => /const CONTROL = (\/.*\/g);/.exec(src)?.[1];
-  assert.ok(controlOf(sanitizeSrc) && controlOf(sanitizeSrc) === controlOf(itbQa), 'CONTROL regex differs between server/src and itb');
-  assert.ok(itbQa.includes(`const AI_SELF = /${AI_SELF_REFERENCE.source}/${AI_SELF_REFERENCE.flags};`), 'AI_SELF regex differs between server/src and itb');
+  assert.ok(
+    controlOf(sanitizeSrc) && controlOf(sanitizeSrc) === controlOf(itbQa),
+    'CONTROL regex differs between server/src and itb',
+  );
+  assert.ok(
+    itbQa.includes(`const AI_SELF = /${AI_SELF_REFERENCE.source}/${AI_SELF_REFERENCE.flags};`),
+    'AI_SELF regex differs between server/src and itb',
+  );
   ok('itb port uses the same CONTROL and self-reference regexes');
 
   const ctx: AiTurnContext = {
-    matchId: 'm', roomId: 'r', playerId: 'p', name: 'Dana', level: 3, language: 'en', round: 1,
-    question: 'Tea or coffee?', aliveNames: ['Dana'], previousAnswers: [], pastRounds: [], maxChars: 80, turnMs: 1000,
+    matchId: 'm',
+    roomId: 'r',
+    playerId: 'p',
+    name: 'Dana',
+    level: 3,
+    language: 'en',
+    round: 1,
+    question: 'Tea or coffee?',
+    aliveNames: ['Dana'],
+    previousAnswers: [],
+    pastRounds: [],
+    maxChars: 80,
+    turnMs: 1000,
   };
   for (const [label, generate] of [
-    ['throws', async () => { throw new Error('boom'); }],
+    [
+      'throws',
+      async () => {
+        throw new Error('boom');
+      },
+    ],
     ['hangs', () => new Promise<string>(() => {})],
     ['self-reveal', async () => 'As an AI language model I cannot pick'],
     ['empty', async () => '   '],
@@ -100,7 +130,12 @@ const server = await createChatServer({
   allowLevelSelect: true,
 });
 const room = server.manager.createRoom({
-  roomId: 't', language: 'en', turnMs: 1200, questionDelayMs: 100, interTurnMs: 50, disconnectGraceMs: 400,
+  roomId: 't',
+  language: 'en',
+  turnMs: 1200,
+  questionDelayMs: 100,
+  interTurnMs: 50,
+  disconnectGraceMs: 400,
 });
 
 const completed: RoundCompletedPayload[] = [];
@@ -108,7 +143,15 @@ const timeouts: PlayerTimeoutPayload[] = [];
 room.on('round_completed', (p) => completed.push(p));
 room.on('player_timeout', (p) => timeouts.push(p));
 
-interface Bot { name: string; id: string; socket: Socket; events: Ev[]; errors: string[]; mode: 'answer' | 'skip'; intrude: boolean }
+interface Bot {
+  name: string;
+  id: string;
+  socket: Socket;
+  events: Ev[];
+  errors: string[];
+  mode: 'answer' | 'skip';
+  intrude: boolean;
+}
 const bots: Bot[] = [];
 for (const name of ['Ayla', 'Boris', 'Cem']) {
   const { token } = room.registerHuman(name);
@@ -191,25 +234,40 @@ assert.ok(completed[0]!.answers.every((a) => a.text) && completed[2]!.answers.ev
 ok('timeout: turn_skipped + player_timeout hook, round continues, others unaffected');
 
 assert.ok(bots[0]!.errors.includes('not_your_turn'), 'out-of-turn submit rejected');
-assert.ok(bots.some((b) => b.errors.includes('already_answered')), 'second submit rejected');
+assert.ok(
+  bots.some((b) => b.errors.includes('already_answered')),
+  'second submit rejected',
+);
 assert.ok(bots[2]!.errors.includes('chat_locked'), 'submit after lock rejected');
 ok('server rejects out-of-turn, duplicate and post-lock submissions');
 
 // sync check: every client saw the same non-typing event sequence
-const sig = (b: Bot) => JSON.stringify(b.events.filter((e) => e.event !== 'typing' && e.event !== 'error').map((e) => [e.event, e.payload.playerId ?? e.payload.round ?? null, e.payload.text ?? null]));
+const sig = (b: Bot) =>
+  JSON.stringify(
+    b.events
+      .filter((e) => e.event !== 'typing' && e.event !== 'error')
+      .map((e) => [e.event, e.payload.playerId ?? e.payload.round ?? null, e.payload.text ?? null]),
+  );
 assert.equal(sig(bots[0]!), sig(bots[1]!));
 assert.equal(sig(bots[1]!), sig(bots[2]!));
 ok('all clients receive identical event streams');
 
 // humans and AI indistinguishable on the wire
 const posts = bots[0]!.events.filter((e) => e.event === 'answer_posted').map((e) => e.payload);
-assert.ok(posts.some((p) => p.playerId === aiId), 'AI posted at least once');
+assert.ok(
+  posts.some((p) => p.playerId === aiId),
+  'AI posted at least once',
+);
 assert.ok(posts.some((p) => p.playerId !== aiId));
 const shapes = new Set(posts.map((p) => Object.keys(p).sort().join(',')));
 assert.equal(shapes.size, 1, 'AI and human answer payloads share one schema');
 const forbidden = /"(kind|isAi|ai|bot|level|authorType|human|imposter|token)"\s*:/i;
-for (const b of bots) for (const e of b.events) assert.ok(!forbidden.test(JSON.stringify(e.payload)), `leak in ${e.event}`);
-assert.ok(bots[0]!.events.some((e) => e.event === 'typing' && e.payload.playerId === aiId), 'AI shows typing indicator');
+for (const b of bots)
+  for (const e of b.events) assert.ok(!forbidden.test(JSON.stringify(e.payload)), `leak in ${e.event}`);
+assert.ok(
+  bots[0]!.events.some((e) => e.event === 'typing' && e.payload.playerId === aiId),
+  'AI shows typing indicator',
+);
 ok('AI and human payloads identical in shape; no AI flag anywhere; AI emits typing');
 
 // analytics
@@ -218,7 +276,14 @@ room.recordResult(2, { suspectedIds: [bots[0]!.id] });
 const rows = readRows(logger.file);
 const aiRows = rows.filter((r) => r.authorType === 'ai');
 assert.equal(aiRows.length, 3);
-assert.deepEqual(aiRows.map((r) => [r.round, r.level, r.suspected, r.votedOut]), [[1, 5, true, true], [2, 5, false, false], [3, 5, null, null]]);
+assert.deepEqual(
+  aiRows.map((r) => [r.round, r.level, r.suspected, r.votedOut]),
+  [
+    [1, 5, true, true],
+    [2, 5, false, false],
+    [3, 5, null, null],
+  ],
+);
 assert.ok(rows.filter((r) => r.authorType === 'human').length >= 8);
 ok('JSONL log holds author types, levels and joined round results');
 

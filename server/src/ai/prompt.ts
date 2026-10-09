@@ -27,7 +27,8 @@ function formatHistory(ctx: AiTurnContext, own: PersonaEntry[]): string {
   const ownRecent = own.filter((e) => e.round < ctx.round).slice(-HISTORY_ROUNDS);
   if (ownRecent.length) {
     lines.push('YOUR earlier answers (stay consistent with these):');
-    for (const e of ownRecent) lines.push(`- Round ${e.round} | Q: ${forPrompt(e.question)} | you: ${forPrompt(e.text)}`);
+    for (const e of ownRecent)
+      lines.push(`- Round ${e.round} | Q: ${forPrompt(e.question)} | you: ${forPrompt(e.text)}`);
   }
   const others = ctx.pastRounds.filter((r) => r.round < ctx.round).slice(-HISTORY_ROUNDS);
   if (others.length) {

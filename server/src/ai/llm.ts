@@ -24,7 +24,12 @@ const anthropic: GenerateAnswer = async (prompt, o) => {
   const data = await postJson(
     'https://api.anthropic.com/v1/messages',
     { 'x-api-key': env.llmApiKey, 'anthropic-version': '2023-06-01' },
-    { model: env.llmModel, max_tokens: o.maxTokens, temperature: o.temperature, messages: [{ role: 'user', content: prompt }] },
+    {
+      model: env.llmModel,
+      max_tokens: o.maxTokens,
+      temperature: o.temperature,
+      messages: [{ role: 'user', content: prompt }],
+    },
     o.timeoutMs,
   );
   return String(data?.content?.[0]?.text ?? '');
@@ -35,7 +40,12 @@ const openai: GenerateAnswer = async (prompt, o) => {
   const data = await postJson(
     `${base}/chat/completions`,
     { authorization: `Bearer ${env.llmApiKey}` },
-    { model: env.llmModel, max_tokens: o.maxTokens, temperature: o.temperature, messages: [{ role: 'user', content: prompt }] },
+    {
+      model: env.llmModel,
+      max_tokens: o.maxTokens,
+      temperature: o.temperature,
+      messages: [{ role: 'user', content: prompt }],
+    },
     o.timeoutMs,
   );
   return String(data?.choices?.[0]?.message?.content ?? '');
@@ -57,7 +67,10 @@ const gemini: GenerateAnswer = async (prompt, o) => {
     o.timeoutMs,
   );
   const parts: { text?: string; thought?: boolean }[] = data?.candidates?.[0]?.content?.parts ?? [];
-  return parts.filter((p) => !p.thought).map((p) => p.text ?? '').join('');
+  return parts
+    .filter((p) => !p.thought)
+    .map((p) => p.text ?? '')
+    .join('');
 };
 
 /** Offline stand-in for dev and tests. Ignores the prompt on purpose. */

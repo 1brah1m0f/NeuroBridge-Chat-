@@ -23,7 +23,13 @@ export class JsonlLogger implements RoundLogger {
   logResult(
     matchId: string,
     round: number,
-    perPlayer: { playerId: string; authorType: PlayerKind; level: number | null; suspected: boolean; votedOut: boolean }[],
+    perPlayer: {
+      playerId: string;
+      authorType: PlayerKind;
+      level: number | null;
+      suspected: boolean;
+      votedOut: boolean;
+    }[],
   ): void {
     this.write({ type: 'result', ts: new Date().toISOString(), matchId, round, players: perPlayer });
   }

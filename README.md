@@ -1,6 +1,10 @@
 # NeuroBridge Chat
 
-> **The game integration lives in [`itb/`](itb/README.md)** (AI IMPOSTOR: SPACE SHIP). It ports this module's turn-based Q&A, sanitising, AI levels, persona memory, humanised timing and analytics to the game's zero-dependency JS server, and adds the LLM movement director. The TypeScript module in this folder is the standalone reference implementation.
+> **The game integration lives in [`itb/`](itb/README.md)** (AI IMPOSTOR: SPACE SHIP). It ports this module's turn-based Q&A, sanitising, AI levels, persona memory, humanised timing and analytics to the game's zero-dependency JS server, and adds the LLM movement director. `npm start` runs that game server.
+>
+> The TypeScript module in this folder is the standalone reference implementation (Socket.IO, React demo UI, `npm run start:chat`). `itb/` does not import it, so the two are kept in step by hand. The security-relevant pieces (the control-character regex and the AI self-reference filter) must stay identical in `server/src` and `itb/js/core/qa.js`; `npm test` fails if they drift apart.
+>
+> **Languages:** this module supports az, en and ru. The `itb/` game supports az and en only; its question bank, UI strings and fallbacks have no Russian yet.
 
 Chat module for an Among-Us-style game where the imposters are AI players. Nobody types freely: each round shows one random question and players answer once, in turn. This repo is only the chat. Map, tasks, kills, voting and lobby plug in through the hooks below.
 
@@ -9,7 +13,7 @@ Chat module for an Among-Us-style game where the imposters are AI players. Nobod
 ```
 config/levels.json            per-level AI tuning (no code changes needed)
 prompts/ai_master_prompt.txt  AI prompt template ({MY_NAME} ... {STYLE_NOTES})
-data/questions.json           102 questions x az/en/ru, 6 categories
+data/questions.json           102 questions x az/en/ru, 6 categories (itb/ uses az/en)
 data/names.json               display names handed to AI players
 shared/protocol.ts            wire types, shared by server and client
 server/src/
@@ -35,8 +39,12 @@ npm --prefix client install
 cp .env.example .env          # optional, defaults work with LLM_PROVIDER=mock
 npm run dev                   # server on :3001, dev room "dev"
 npm run client:dev            # UI on http://localhost:5173
-npm test                      # simulation, 10 checks
+npm test                      # simulation + unit checks, 15 checks
 npm run typecheck
+npm run test:itb              # game rules + server/protocol tests in itb/
+npm run lint                  # ESLint over the TS module and itb/
+npm run format:check          # Prettier over the TS module (itb/ is hand-formatted)
+npm run check                 # all of the above; CI runs the same steps on every push and PR
 ```
 
 Open the UI in 1+ tabs with different names. The dev harness adds one AI player and starts a round every ~6 s while a human is connected.
@@ -124,7 +132,7 @@ Only the current-turn player may submit. One answer per round, no edits or repli
 
 ## Tuning levels
 
-Edit `config/levels.json`; it is re-read when the file changes, no restart needed.
+Edit `config/levels.json`; changes are picked up within a second, no restart needed. A half-saved or invalid file keeps the previous settings.
 
 | Field | Effect |
 |---|---|

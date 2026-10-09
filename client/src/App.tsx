@@ -26,8 +26,16 @@ export function App() {
         }}
       >
         <h1>Join chat</h1>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" maxLength={20} autoFocus />
-        <button type="submit" disabled={!name.trim()}>Join</button>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name"
+          maxLength={20}
+          autoFocus
+        />
+        <button type="submit" disabled={!name.trim()}>
+          Join
+        </button>
       </form>
     </main>
   );

@@ -18,7 +18,10 @@ export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.ma
 /** Sliding-window limiter: at most `max` hits per `windowMs`. */
 export class RateLimiter {
   private hits: number[] = [];
-  constructor(private max: number, private windowMs: number) {}
+  constructor(
+    private max: number,
+    private windowMs: number,
+  ) {}
   allow(now = Date.now()): boolean {
     this.hits = this.hits.filter((t) => now - t < this.windowMs);
     if (this.hits.length >= this.max) return false;

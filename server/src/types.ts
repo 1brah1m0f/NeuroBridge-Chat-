@@ -79,7 +79,17 @@ export interface RoundResult {
 
 export interface RoundLogger {
   logRound(entry: RoundLogEntry): void;
-  logResult(matchId: string, round: number, perPlayer: { playerId: string; authorType: PlayerKind; level: number | null; suspected: boolean; votedOut: boolean }[]): void;
+  logResult(
+    matchId: string,
+    round: number,
+    perPlayer: {
+      playerId: string;
+      authorType: PlayerKind;
+      level: number | null;
+      suspected: boolean;
+      votedOut: boolean;
+    }[],
+  ): void;
 }
 
 export interface ChatSink {
