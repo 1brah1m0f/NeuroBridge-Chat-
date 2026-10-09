@@ -1,4 +1,5 @@
-/* AI IMPOSTOR: SPACE SHIP — mini-games, set A: wires, swipe, download, upload, fuel, calibrate, leaves, align.
+/* AI IMPOSTOR: SPACE SHIP — mini-games, set A: wires, swipe.
+ * (download, upload, fuel, calibrate, leaves and align live in tasks-b.js.)
  * Each game is registered with AS.Tasks.register(id, factory, { w, h }) (see taskhost.js header).
  * All art is procedural canvas; static device art is cached per instance in offscreen layers that are
  * re-rendered only when the panel scale changes. Strings: game.<id>.* (AZ + EN) registered below.
@@ -30,38 +31,6 @@
       'game.swipe.ok': 'QƏBUL EDİLDİ. TƏŞƏKKÜRLƏR!',
       'game.swipe.card': 'EKİPAJ KARTI',
       'game.swipe.crew': 'Ekipaj üzvü',
-
-      'game.download.title': 'Məlumatları endir',
-      'game.download.btn': 'ENDİR',
-      'game.download.hint': 'Düyməni bas və endirmə bitənə qədər gözlə',
-      'game.download.tablet': 'Planşetim',
-      'game.download.station': 'Stansiya',
-      'game.download.eta': 'Təxmini vaxt: {t}',
-      'game.download.calc': 'Hesablanır...',
-      'game.download.done': 'Tamamlandı!',
-      'game.download.d': '{n} gün', 'game.download.h': '{n} saat', 'game.download.m': '{n} dəq', 'game.download.s': '{n} san',
-
-      'game.upload.title': 'Məlumatları göndər',
-      'game.upload.btn': 'GÖNDƏR',
-      'game.upload.hint': 'Düyməni bas və göndərmə bitənə qədər gözlə',
-      'game.upload.hq': 'Baş qərargah',
-
-      'game.fuel.title': 'Mühərriklərə yanacaq doldur',
-      'game.fuel.hintFill': 'Kanistri doldurmaq üçün düyməni basılı saxla',
-      'game.fuel.hintPour': 'Yanacağı tökmək üçün düyməni basılı saxla',
-      'game.fuel.fill': 'DOLDUR', 'game.fuel.pour': 'TÖK',
-      'game.fuel.can': 'KANİSTR', 'game.fuel.tank': 'YANACAQ ÇƏNİ',
-
-      'game.calibrate.title': 'Paylayıcını kalibrlə',
-      'game.calibrate.hint': 'Fırlanan hissə nişana çatanda düyməni bas',
-      'game.calibrate.btn': 'KALİBRLƏ',
-
-      'game.leaves.title': 'O2 filtrini təmizlə',
-      'game.leaves.hint': 'Yarpaqları tutub soldakı hava sorucusuna at',
-
-      'game.align.title': 'Mühərrik çıxışını tənzimlə',
-      'game.align.hint': 'Qolu sürüşdürərək xətti mərkəzə gətir',
-      'game.align.locked': 'TƏNZİMLƏNDİ',
     },
     en: {
       'game.wires.title': 'Fix Wiring',
@@ -78,38 +47,6 @@
       'game.swipe.ok': 'ACCEPTED. THANK YOU!',
       'game.swipe.card': 'CREW ID',
       'game.swipe.crew': 'Crewmate',
-
-      'game.download.title': 'Download Data',
-      'game.download.btn': 'DOWNLOAD',
-      'game.download.hint': 'Press the button and wait for the download',
-      'game.download.tablet': 'My Tablet',
-      'game.download.station': 'Station',
-      'game.download.eta': 'Estimated time: {t}',
-      'game.download.calc': 'Calculating...',
-      'game.download.done': 'Complete!',
-      'game.download.d': '{n}d', 'game.download.h': '{n}hr', 'game.download.m': '{n}m', 'game.download.s': '{n}s',
-
-      'game.upload.title': 'Upload Data',
-      'game.upload.btn': 'UPLOAD',
-      'game.upload.hint': 'Press the button and wait for the upload',
-      'game.upload.hq': 'Headquarters',
-
-      'game.fuel.title': 'Fuel Engines',
-      'game.fuel.hintFill': 'Hold the button to fill the gas can',
-      'game.fuel.hintPour': 'Hold the button to pour fuel into the engine',
-      'game.fuel.fill': 'FILL', 'game.fuel.pour': 'POUR',
-      'game.fuel.can': 'GAS CAN', 'game.fuel.tank': 'FUEL TANK',
-
-      'game.calibrate.title': 'Calibrate Distributor',
-      'game.calibrate.hint': 'Press the button when the spinner meets the marker',
-      'game.calibrate.btn': 'CALIBRATE',
-
-      'game.leaves.title': 'Clean O2 Filter',
-      'game.leaves.hint': 'Grab the leaves and throw them into the vent on the left',
-
-      'game.align.title': 'Align Engine Output',
-      'game.align.hint': 'Drag the lever to align the line with the center',
-      'game.align.locked': 'ALIGNED',
     },
   });
 
