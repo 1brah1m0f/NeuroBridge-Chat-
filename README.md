@@ -181,6 +181,6 @@ Both accept `--file=path`. Rates only count rounds that have a reported result (
 - Auth is a bare token handed out by the game. Plug in real session auth in `join_chat`.
 - Single server process. Multiple instances need the Socket.IO Redis adapter plus shared room state.
 - The AI sees up to the last 5 rounds of history; long matches may need summarising.
-- Typo and style injection is language-agnostic and simple. Per-language slang or keyboard-adjacent typos would help higher levels.
+- Typo injection is language-agnostic and simple (lowercasing does follow the match language, so az "İ"/"I" come out right). Per-language slang or keyboard-adjacent typos would help higher levels.
 - `humanize` timing is a heuristic. Tune it from `logs:summary` and real playtests.
 - Prompt-injection defence is layered (sanitising, data blocks, instruction, output checks) but not proof against every attack.
