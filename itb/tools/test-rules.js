@@ -243,6 +243,14 @@ function director() {
   run(g, 15, () => !victim.alive);
   check('directive "kill" leads to a kill when no witness sees it', !victim.alive || g.list().filter((p) => p.alive && !p.isAI).length > 0);
 
+  section('Text helpers (kept in sync with server/src)');
+  check('stripUnsafe removes zero-width, bidi, word-joiner, BOM and line-separator chars', AS.stripUnsafe('a​b⁠c⁦d‮e﻿f g') === 'a b c d e f g');
+  check('lowercase follows the match language (az: no combining dot, I -> ı)', AS.lowerFor('İstanbul YAXŞI', 'az') === 'istanbul yaxşı' && AS.lowerFor('HELLO', 'en') === 'hello');
+  const always = () => 0; // rng that triggers every style rule
+  check('qaStyle lowercases with the given language', !/̇/.test(AS.qaStyle('İstanbulda idim', 5, always, 'az')));
+  check('self-reveals are rejected (en/az/ru)', ['As an AI, I think so', "I'm a bot", 'I’m the impostor', 'mən botam', 'Mən süni intellektəm', 'я бот', 'Я — ИИ'].every((s) => AS.cleanModelAnswer(s, 140) === null));
+  check('normal "impostor" talk is kept', ['the impostor vented in nav', "I'm not a bot", 'я не бот', 'saxtakar qırmızıdır', 'botanika'].every((s) => AS.cleanModelAnswer(s, 140) === s));
+
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 }

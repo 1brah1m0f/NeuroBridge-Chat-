@@ -122,11 +122,16 @@
   }
 
   // Level-driven surface imperfections: typos, lowercase, missing final punctuation.
-  AS.qaStyle = function (text, level, rng) {
+  // Lowercase with the match language's rules: in az "I" -> "ı" and "İ" -> "i" (no stray combining dot).
+  AS.lowerFor = function (text, lang) {
+    try { return text.toLocaleLowerCase(lang || 'en'); } catch (e) { return text.toLowerCase(); }
+  };
+
+  AS.qaStyle = function (text, level, rng, lang) {
     const L = AS.aiLevel(level);
     let s = text;
     if (rng() < L.typo) s = injectTypo(s, rng);
-    if (rng() < L.lower) s = s.toLocaleLowerCase();
+    if (rng() < L.lower) s = AS.lowerFor(s, lang);
     if (rng() < L.dropEnd) s = s.replace(/[.!]+$/, '');
     return s;
   };
@@ -141,7 +146,10 @@
     return Math.min(ms / 1000, capSec == null ? 1e9 : capSec);
   };
 
-  const AI_SELF = /\b(as an ai|language model|i am an ai|i'm an ai|i am a bot|i'm a bot|imposter|impostor|system prompt)\b/i;
+  // The model calling itself an AI / bot / the impostor, in en, az and ru. Merely mentioning "impostor" is fine:
+  // players talk about impostors all the time. Unicode-aware boundaries, because \b does not work for Cyrillic or "ə".
+  // Keep in sync with AI_SELF_REFERENCE in server/src/ai/humanize.ts.
+  const AI_SELF = /(?<![\p{L}\p{N}])(?:as an ai|as a language model|language model|system prompt|i(?: am|['’]m) (?:an? )?(?:ai|bot|robot|chatbot)|i(?: am|['’]m) (?:the |an |a )?impost[eo]r|(?:mən )?(?:bir )?(?:bot|robot|saxtakar)am|(?:mən )?(?:bir )?süni intellekt(?:əm|im)|mən ai-?(?:yam|am)|dil modeliyəm|я\s*(?:[—-]\s*)?(?:бот|ии|ai|робот|нейросеть|языковая модель|искусственный интеллект|импостер|импостор|предатель)|как ии|языковая модель)(?![\p{L}\p{N}])/iu;
   // Raw model output -> one plain answer line, or null.
   AS.cleanModelAnswer = function (raw, max) {
     let s = String(raw == null ? '' : raw).trim();
@@ -357,7 +365,7 @@
         if (!text) text = U.pick(this.rng, L.fallbacks[this._qaLangOf()] || L.fallbacks.en);
         text = AS.cleanModelAnswer(text, max) || '...';
       }
-      text = AS.truncateText(AS.qaStyle(text, level, this.rng), max) || text;
+      text = AS.truncateText(AS.qaStyle(text, level, this.rng, this._qaLangOf()), max) || text;
       const cap = this.settings.answerTime * 0.8;
       const started = turn.started;
       let at = started + AS.aiDelay(Array.from(text).length, level, this.rng, cap);

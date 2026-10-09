@@ -637,7 +637,11 @@
     const show = !!(s && App.screen === 'game' && s.phase === 'playing');
     cls(root, 'hud-on', show);
     cls(root, 'hud-lobby', !!(s && App.screen === 'game' && s.phase === 'lobby'));
-    if (s && s.phase !== lastPhase) { lastPhase = s.phase; if (s.phase !== 'playing') closeOverlay(); lastRoom = undefined; }
+    if (!s || App.screen !== 'game') {
+      // left the match (menu, disconnect): an open map/sabotage/admin overlay must not stay above the menu
+      if (ov) closeOverlay();
+      lastPhase = null;
+    } else if (s.phase !== lastPhase) { lastPhase = s.phase; if (s.phase !== 'playing') closeOverlay(); lastRoom = undefined; }
     if (!show) {
       for (const k in hl) hl[k] = null;
       if (App.view) App.view.highlights = hl;

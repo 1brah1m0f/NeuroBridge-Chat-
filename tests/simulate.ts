@@ -7,6 +7,7 @@ import path from 'node:path';
 import { io, type Socket } from 'socket.io-client';
 import type { JoinChatAck, RoundCompletedPayload, PlayerTimeoutPayload } from '../shared/protocol';
 import { AiAdapter } from '../server/src/ai/adapter';
+import { AI_SELF_REFERENCE, cleanModelOutput, lowerFor } from '../server/src/ai/humanize';
 import { createLlm } from '../server/src/ai/llm';
 import { JsonlLogger } from '../server/src/analytics/jsonlLogger';
 import { createChatServer } from '../server/src/server';
@@ -38,6 +39,29 @@ const ok = (name: string) => {
   assert.deepEqual(sanitizeAnswer('x'.repeat(101), 100), { ok: false, code: 'too_long' });
   assert.deepEqual(sanitizeAnswer(42, 100), { ok: false, code: 'bad_request' });
   ok('sanitizer strips markup/system content, rejects empty/long/non-string');
+
+  const invisible = sanitizeAnswer('a​b⁠c⁦d‮e﻿f g', 100);
+  assert.ok(invisible.ok && invisible.text === 'a b c d e f g', JSON.stringify(invisible));
+  ok('sanitizer removes zero-width, bidi, word-joiner, BOM and line-separator chars');
+
+  assert.equal(lowerFor('İstanbul YAXŞI', 'az'), 'istanbul yaxşı');
+  assert.equal(lowerFor('HELLO', 'en'), 'hello');
+  assert.equal(lowerFor('ПРИВЕТ', 'ru'), 'привет');
+  ok('lowercasing follows the match language (no combining dot in az)');
+
+  for (const s of ['As an AI, I think so', "I'm a bot", 'I’m the impostor', 'mən botam', 'Mən süni intellektəm', 'я бот', 'Я — ИИ'])
+    assert.equal(cleanModelOutput(s, 100), null, s);
+  for (const s of ['the impostor vented in nav', "I'm not a bot", 'я не бот', 'saxtakar qırmızıdır', 'botanika'])
+    assert.equal(cleanModelOutput(s, 100), s, s);
+  ok('self-reference filter catches en/az/ru self-reveals, keeps normal "impostor" talk');
+
+  // itb/ is a hand port of this module; the security-relevant regexes must not drift apart.
+  const itbQa = fs.readFileSync(path.join(import.meta.dirname, '..', 'itb', 'js', 'core', 'qa.js'), 'utf8');
+  const sanitizeSrc = fs.readFileSync(path.join(import.meta.dirname, '..', 'server', 'src', 'sanitize.ts'), 'utf8');
+  const controlOf = (src: string) => /const CONTROL = (\/.*\/g);/.exec(src)?.[1];
+  assert.ok(controlOf(sanitizeSrc) && controlOf(sanitizeSrc) === controlOf(itbQa), 'CONTROL regex differs between server/src and itb');
+  assert.ok(itbQa.includes(`const AI_SELF = /${AI_SELF_REFERENCE.source}/${AI_SELF_REFERENCE.flags};`), 'AI_SELF regex differs between server/src and itb');
+  ok('itb port uses the same CONTROL and self-reference regexes');
 
   const ctx: AiTurnContext = {
     matchId: 'm', roomId: 'r', playerId: 'p', name: 'Dana', level: 3, language: 'en', round: 1,
