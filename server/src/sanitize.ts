@@ -1,6 +1,8 @@
 // Everything a player (or the LLM) writes is untrusted. This is the single sanitising choke point.
 
-const CONTROL = /[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁦-⁩﻿]/g;
+// C0/C1 controls, zero-width and bidi marks, line/paragraph separators, invisible operators, BOM.
+// Keep in sync with itb/js/core/qa.js (CONTROL) and server/src/sanitize.ts.
+const CONTROL = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 const TAGS = /<\/?[a-zA-Z!][^>]*>?/g;
 const SPECIAL_TOKENS = /<\|[^|]*\|>|\[\/?(?:INST|SYS)\]|<<\/?SYS>>/gi;
 const ROLE_PREFIX = /^\s*(?:system|assistant|developer|user|human|ai)\s*[:>]\s*/i;

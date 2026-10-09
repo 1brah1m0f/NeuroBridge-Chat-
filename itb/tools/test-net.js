@@ -424,6 +424,16 @@ async function hello(label, profile) {
     check('dotfiles hidden', r.status === 404, r.status);
     r = await httpReq('GET', '/index.html%00.js');
     check('NUL byte rejected', r.status === 400 || r.status === 404, r.status);
+    // a real file in the log dir, so a 404 means "blocked", not "missing"
+    const probeLog = path.join(ROOT, 'logs', 'net-test-probe.jsonl');
+    fs.mkdirSync(path.dirname(probeLog), { recursive: true });
+    fs.writeFileSync(probeLog, '{"authorType":"ai"}\n');
+    try {
+      for (const p of ['/logs/net-test-probe.jsonl', '/LOGS/net-test-probe.jsonl', '/server/server.js', '/server/prompts/ai_chat_prompt.txt']) {
+        r = await httpReq('GET', p);
+        check('server-only file hidden: ' + p, r.status === 404 && !r.body.includes('authorType'), r.status);
+      }
+    } finally { try { fs.unlinkSync(probeLog); } catch (e) { /* ignore */ } }
 
     // ---------------------------------------------------------------- raw websocket protocol
     section('WebSocket (RFC 6455)');
@@ -500,6 +510,14 @@ async function hello(label, profile) {
     check('requested taken color is replaced by a free one', s && B.player().color && B.player().color !== A.player(A.id) && B.player().color !== 'red', s && B.player());
     const joinEv = await A.waitEvent((e) => e.type === 'join', 2000, 0);
     check('A receives a join event', !!joinEv);
+
+    // A human already in a room must not switch to "agent" (agents get observe(), which carries private bot data).
+    const obsMark = B.msgs.length;
+    B.send({ t: 'hello', v: 1, name: 'Beta', agent: true });
+    await B.waitMsg((m) => m.t === 'welcome', 2000, obsMark);
+    const obs = await B.waitMsg((m) => m.t === 'obs', 1500, obsMark);
+    check('hello {agent:true} inside a room does not grant observations', obs === null, obs && Object.keys(obs.o || {}));
+    check('...and snapshots keep coming', !!(await B.waitMsg((m) => m.t === 'snap', 1500, obsMark)));
 
     const C = track(await hello('Gamma', { v: 999 }));
     check('wrong protocol version -> err net.version', C.errs.includes('net.version'), C.errs);
