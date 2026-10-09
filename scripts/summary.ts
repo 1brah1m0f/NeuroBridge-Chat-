@@ -3,7 +3,14 @@ import { readRows } from './lib';
 
 const ai = readRows().filter((r) => r.authorType === 'ai' && !r.timedOut);
 
-interface Stat { answers: number; judged: number; suspected: number; votedOut: number; fallback: number; delaySum: number }
+interface Stat {
+  answers: number;
+  judged: number;
+  suspected: number;
+  votedOut: number;
+  fallback: number;
+  delaySum: number;
+}
 const byLevel = new Map<number, Stat>();
 for (const r of ai) {
   const s = byLevel.get(r.level ?? 0) ?? { answers: 0, judged: 0, suspected: 0, votedOut: 0, fallback: 0, delaySum: 0 };
@@ -32,4 +39,6 @@ console.table(
       avgDelayMs: s.answers ? Math.round(s.delaySum / s.answers) : 0,
     })),
 );
-console.log('suspectedRate = share of AI answers whose author humans flagged; votedOutRate = share voted out. Rounds without a reported result are excluded from both.');
+console.log(
+  'suspectedRate = share of AI answers whose author humans flagged; votedOutRate = share voted out. Rounds without a reported result are excluded from both.',
+);

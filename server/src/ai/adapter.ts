@@ -64,7 +64,7 @@ export class AiAdapter implements AiPlanner {
 
     const fallbackUsed = text === null;
     if (text === null) text = pickFallback(level, ctx.language);
-    text = truncate(applyStyle(text, level), maxChars);
+    text = truncate(applyStyle(text, level, ctx.language), maxChars);
 
     const llmMs = Date.now() - started;
     const target = computeDelayMs(text.length, level.delay, budgetMs) * this.scale;

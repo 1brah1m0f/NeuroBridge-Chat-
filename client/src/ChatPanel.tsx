@@ -59,7 +59,9 @@ export function ChatPanel({ serverUrl, roomId, name }: Props) {
 
   return (
     <section className="chat" aria-label="Chat">
-      {state.aiLevel !== null && state.status === 'joined' && <LevelPicker level={state.aiLevel} onChange={setAiLevel} />}
+      {state.aiLevel !== null && state.status === 'joined' && (
+        <LevelPicker level={state.aiLevel} onChange={setAiLevel} />
+      )}
       <header className="chat-question">
         {state.question ? (
           <>
@@ -89,7 +91,11 @@ export function ChatPanel({ serverUrl, roomId, name }: Props) {
                 ) : skipped.includes(p.playerId) ? (
                   <span className="text muted">no answer</span>
                 ) : isTyping ? (
-                  <span className="text muted typing">typing<i>.</i><i>.</i><i>.</i></span>
+                  <span className="text muted typing">
+                    typing<i>.</i>
+                    <i>.</i>
+                    <i>.</i>
+                  </span>
                 ) : (
                   <span className="text muted">{isTurn ? '…' : ''}</span>
                 )}
@@ -114,10 +120,20 @@ export function ChatPanel({ serverUrl, roomId, name }: Props) {
           autoComplete="off"
           aria-label="Your answer"
         />
-        <button type="submit" disabled={!canType || !text.trim()}>Send</button>
-        {canType && <span className="count">{text.length}/{state.maxChars}</span>}
+        <button type="submit" disabled={!canType || !text.trim()}>
+          Send
+        </button>
+        {canType && (
+          <span className="count">
+            {text.length}/{state.maxChars}
+          </span>
+        )}
       </form>
-      {state.error && state.status === 'joined' && <p className="chat-error" role="alert">{state.error}</p>}
+      {state.error && state.status === 'joined' && (
+        <p className="chat-error" role="alert">
+          {state.error}
+        </p>
+      )}
     </section>
   );
 }

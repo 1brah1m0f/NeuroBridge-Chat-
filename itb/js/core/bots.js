@@ -122,7 +122,9 @@
     for (const k in m.seen) { const s = m.seen[k]; lastSeen[k] = { x: Math.round(s.x), y: Math.round(s.y), room: s.room, ago: +(game.time - s.t).toFixed(1) }; }
     const out = {
       v: 1, t: +game.time.toFixed(2), phase: game.phase, lang, me,
-      players: game.order.map((q) => game.players[q]).filter(Boolean).map((q) => ({ id: q.id, name: q.name, color: q.color, alive: q.alive && !q.left, left: !!q.left, isBot: !!q.isBot, me: q === p })),
+      players: game.order.map((q) => game.players[q]).filter(Boolean).map((q) => ({ id: q.id, name: q.name, color: q.color, alive: q.alive && !q.left, left: !!q.left,
+        // same rule as snapshotFor(): bot flags only in the lobby, and never for AI impostors
+        isBot: game.phase === 'lobby' ? !!q.isBot && !q.isAI : false, me: q === p })),
       visiblePlayers, visibleBodies, meeting, sabotage, lastSeen,
       closedDoors: Object.keys(game.doorTimers || {}),
       events: m.events.slice(-20).map((e) => Object.assign({ ago: +(game.time - e.t).toFixed(1) }, e)),

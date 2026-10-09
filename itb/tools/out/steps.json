@@ -1,1 +1,0 @@
-[{"wait":5000},{"eval":"AS.App.send({type:\"chat\",text:\"kim şübhəlidir? harda idiniz?\"})"},{"wait":9000},{"shot":"tools/out/meeting.png"}]

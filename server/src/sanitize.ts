@@ -1,6 +1,8 @@
 // Everything a player (or the LLM) writes is untrusted. This is the single sanitising choke point.
 
-const CONTROL = /[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁦-⁩﻿]/g;
+// C0/C1 controls, zero-width and bidi marks, line/paragraph separators, invisible operators, BOM.
+// Keep in sync with itb/js/core/qa.js (CONTROL) and server/src/sanitize.ts.
+const CONTROL = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 const TAGS = /<\/?[a-zA-Z!][^>]*>?/g;
 const SPECIAL_TOKENS = /<\|[^|]*\|>|\[\/?(?:INST|SYS)\]|<<\/?SYS>>/gi;
 const ROLE_PREFIX = /^\s*(?:system|assistant|developer|user|human|ai)\s*[:>]\s*/i;
@@ -12,7 +14,7 @@ export function stripUnsafe(input: string): string {
   let s = input.normalize('NFC');
   s = s.replace(SPECIAL_TOKENS, ' ');
   // repeat so nested tags like <<b>b> cannot survive a single pass
-  for (let prev = ''; prev !== s; ) {
+  for (let prev = ''; prev !== s;) {
     prev = s;
     s = s.replace(TAGS, ' ');
   }
@@ -20,16 +22,14 @@ export function stripUnsafe(input: string): string {
   s = s.replace(CODE_FENCE, ' ').replace(HEADING_ROLE, ' ');
   s = s.replace(CONTROL, ' ').replace(/\s+/g, ' ').trim();
   // role prefixes ("system: ...") may be stacked
-  for (let prev = ''; prev !== s; ) {
+  for (let prev = ''; prev !== s;) {
     prev = s;
     s = s.replace(ROLE_PREFIX, '');
   }
   return s.trim();
 }
 
-export type SanitizeResult =
-  | { ok: true; text: string }
-  | { ok: false; code: 'bad_request' | 'empty' | 'too_long' };
+export type SanitizeResult = { ok: true; text: string } | { ok: false; code: 'bad_request' | 'empty' | 'too_long' };
 
 export function sanitizeAnswer(raw: unknown, maxChars: number): SanitizeResult {
   if (typeof raw !== 'string') return { ok: false, code: 'bad_request' };

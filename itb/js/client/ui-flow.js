@@ -306,9 +306,8 @@
           else if (sameId(id, turnId)) html += row(p, typingIds.some((x) => sameId(x, id)) ? '<p class="dim typing">…</p>' : '<p class="dim">…</p>', 'turn');
         }
       }
-      const atBottom = qaUI.list.scrollTop + qaUI.list.clientHeight >= qaUI.list.scrollHeight - 30;
       qaUI.list.innerHTML = html;
-      if (atBottom || true) qaUI.list.scrollTop = qaUI.list.scrollHeight;
+      qaUI.list.scrollTop = qaUI.list.scrollHeight; // new answers always scroll into view
     }
     let status;
     if (m.stage !== 'discussion') status = t('flow.qa.done');
@@ -333,7 +332,6 @@
     const msgs = m.chat || [];
     const newest = msgs.length ? msgs[msgs.length - 1].id : 0;
     if (newest !== lastChatId) {
-      const atBottom = chat.list.scrollTop + chat.list.clientHeight >= chat.list.scrollHeight - 30;
       if (newest > lastChatId && lastChatId) sfx('chat');
       lastChatId = newest;
       chat.list.innerHTML = msgs.map((c) => {
@@ -341,7 +339,7 @@
         const mine = sameId(c.player, s.you);
         return '<div class="fl-msg' + (mine ? ' mine' : '') + (c.ghost ? ' ghost' : '') + '">' + por(p.color, p.hat, 30, { dead: !!c.ghost }) + '<div><b style="color:' + ((AS.COLOR_BY_ID[p.color] || {}).main || '#fff') + '">' + esc(p.name) + '</b><p>' + esc(c.text) + '</p></div></div>';
       }).join('');
-      if (atBottom || true) chat.list.scrollTop = chat.list.scrollHeight;
+      chat.list.scrollTop = chat.list.scrollHeight; // new messages always scroll into view
     }
     const typing = (m.typing || []).filter((id) => !sameId(id, s.you)).map((id) => (pl(id) || {}).name).filter(Boolean);
     chat.typing.textContent = typing.length ? t('flow.typing', { names: typing.slice(0, 3).join(', ') }) : '';

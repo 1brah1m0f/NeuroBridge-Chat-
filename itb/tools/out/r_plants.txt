@@ -1,6 +1,0 @@
-[console.log] REGISTERED wires,swipe,chart,steer,plants,sample,fix_lights,fix_comms,fix_o2,fix_reactor
-[eval] open
-[console.log] TASK_COMPLETE plants
-[console.log] TASK_CLOSE plants completed=true
-[done] page errors: 0
-RESULT plants: COMPLETED

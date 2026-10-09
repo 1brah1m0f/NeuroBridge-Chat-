@@ -8,8 +8,21 @@ const out = arg('out', `export.${format}`);
 
 const rows = readRows();
 const cols: (keyof FlatRow)[] = [
-  'matchId', 'round', 'language', 'category', 'question', 'playerId', 'name', 'authorType', 'level',
-  'text', 'timedOut', 'delayMs', 'fallbackUsed', 'suspected', 'votedOut',
+  'matchId',
+  'round',
+  'language',
+  'category',
+  'question',
+  'playerId',
+  'name',
+  'authorType',
+  'level',
+  'text',
+  'timedOut',
+  'delayMs',
+  'fallbackUsed',
+  'suspected',
+  'votedOut',
 ];
 const csvCell = (v: unknown) => {
   const s = v === null || v === undefined ? '' : String(v);

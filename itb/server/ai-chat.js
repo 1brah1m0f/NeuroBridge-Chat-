@@ -11,10 +11,21 @@ const LANG_NAMES = { az: 'Azerbaijani', en: 'English' };
 
 function createAnswerProvider({ AS, generate, log }) {
   const file = path.join(__dirname, 'prompts', 'ai_chat_prompt.txt');
+  // Re-read when the file changes, but stat it at most once a second (this runs on every AI turn).
+  // A failed re-read keeps the last good template.
   let cache = null;
+  let checkedAt = -Infinity;
   const template = () => {
-    const m = fs.statSync(file).mtimeMs;
-    if (!cache || cache.m !== m) cache = { m, text: fs.readFileSync(file, 'utf8') };
+    const now = Date.now();
+    if (cache && now - checkedAt < 1000) return cache.text;
+    checkedAt = now;
+    try {
+      const m = fs.statSync(file).mtimeMs;
+      if (!cache || cache.m !== m) cache = { m, text: fs.readFileSync(file, 'utf8') };
+    } catch (e) {
+      if (!cache) throw e;
+      if (log) log('[ai-chat] keeping previous prompt template: ' + e.message);
+    }
     return cache.text;
   };
   const clean = (s) => AS.stripUnsafe(String(s == null ? '' : s)).replace(/[{}]/g, '');

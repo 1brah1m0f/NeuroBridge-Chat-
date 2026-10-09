@@ -2,7 +2,20 @@ import type { DelayConfig, LevelConfig } from '../config';
 import { stripUnsafe, truncate } from '../sanitize';
 import { clamp, pick, type Rng } from '../util';
 
-const AI_SELF_REFERENCE = /\b(as an ai|language model|i am an ai|i'm an ai|i am a bot|i'm a bot|imposter|impostor|system prompt)\b/i;
+// The model calling itself an AI / bot / the impostor, in en, az and ru. Merely mentioning "impostor" is fine:
+// players talk about impostors all the time. Unicode-aware boundaries, because \b does not work for Cyrillic or "ə".
+// Keep in sync with AI_SELF in itb/js/core/qa.js.
+export const AI_SELF_REFERENCE =
+  /(?<![\p{L}\p{N}])(?:as an ai|as a language model|language model|system prompt|i(?: am|['’]m) (?:an? )?(?:ai|bot|robot|chatbot)|i(?: am|['’]m) (?:the |an |a )?impost[eo]r|(?:mən )?(?:bir )?(?:bot|robot|saxtakar)am|(?:mən )?(?:bir )?süni intellekt(?:əm|im)|mən ai-?(?:yam|am)|dil modeliyəm|я\s*(?:[—-]\s*)?(?:бот|ии|ai|робот|нейросеть|языковая модель|искусственный интеллект|импостер|импостор|предатель)|как ии|языковая модель)(?![\p{L}\p{N}])/iu;
+
+/** Lowercase with the match language's rules: in az "I" -> "ı" and "İ" -> "i" (no stray combining dot). */
+export function lowerFor(text: string, language: string): string {
+  try {
+    return text.toLocaleLowerCase(language);
+  } catch {
+    return text.toLowerCase(); // unknown locale tag
+  }
+}
 
 /** Turn raw model output into a single plain answer line, or null if it is unusable. */
 export function cleanModelOutput(raw: string, maxChars: number): string | null {
@@ -31,10 +44,10 @@ function injectTypo(text: string, rng: Rng): string {
 }
 
 /** Level-driven surface imperfections: typos, lowercase, missing final punctuation. */
-export function applyStyle(text: string, level: LevelConfig, rng: Rng = Math.random): string {
+export function applyStyle(text: string, level: LevelConfig, language: string, rng: Rng = Math.random): string {
   let s = text;
   if (rng() < level.typoProbability) s = injectTypo(s, rng);
-  if (rng() < level.lowercaseProbability) s = s.toLocaleLowerCase();
+  if (rng() < level.lowercaseProbability) s = lowerFor(s, language);
   if (rng() < level.dropEndPunctuationProbability) s = s.replace(/[.!]+$/, '');
   return s;
 }

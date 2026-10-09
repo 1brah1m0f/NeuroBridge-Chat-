@@ -1,0 +1,7 @@
+node_modules
+dist
+logs
+package-lock.json
+**/package-lock.json
+# itb/ is hand-formatted in a dense one-statement-per-line style; reformatting it would bury real diffs
+itb

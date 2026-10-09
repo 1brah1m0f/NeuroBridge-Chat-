@@ -52,7 +52,7 @@ Without a key the corresponding feature silently falls back to the built-in beha
 - **Nothing reveals an AI.** Snapshots carry no AI/bot flag after the lobby, events are identical for humans and AIs, and the roles of other players are never sent to a human.
 
 ### Analytics
-`logs/chat.jsonl` (server only) records every question with each answer's author type, level, delay and whether the LLM failed, plus per-meeting votes against each AI. `node tools/chat-summary.js` prints per level: AI answers, LLM fallback rate, average delay, how often an AI got votes / was ejected.
+`logs/chat.jsonl` (server only, never served over HTTP; the static server also refuses `server/` and `tools/out/`) records every question with each answer's author type, level, delay and whether the LLM failed, plus per-meeting votes against each AI. `node tools/chat-summary.js` prints per level: AI answers, LLM fallback rate, average delay, how often an AI got votes / was ejected.
 
 ## Controls
 | Action | Keyboard | Touch |
@@ -66,9 +66,10 @@ Without a key the corresponding feature silently falls back to the built-in beha
 (Kill / vent / sabotage buttons exist for the AI side only; humans are never impostors.)
 
 ## Developers
+- Task mini-games: `js/client/tasks/`. `kit.js` is the shared canvas art kit used by `tasks-c.js` and `sabotage.js`; `tasks-a.js` (wires, swipe) and `tasks-b.js` (the compact games) keep their own small helpers.
 - Shared simulation in `js/core/` (also loaded by the server): `game.js` (rules), `qa.js` (meeting Q&A, AI levels, sanitising), `bots.js` (bot brain, perception API, directive executor), `questions.js` (question bank, 118 questions az/en). Server: `server/` (`server.js` rooms, `director.js` Groq, `ai-chat.js` Gemini, `analytics.js`, `llm.js`, `env.js`). Details: `docs/CONTRACT.md` (section 10 lists what changed) and `docs/AGENTS.md`.
 - URL parameters: `?lang=en|az`, `?auto=1` (start offline immediately, with `&bots=5&level=3&seed=42&skill=hard`), `?debug=1`, `?scene=lobby|intro|meeting|voting|eject|end|map|sabotage`.
-- Tests: `node tools/test-rules.js` (new rules, 45 checks), `node tools/test-net.js` (server and protocol, 75 checks), `node tools/sim.js 3 7 --chat` (headless bot matches), `node tools/validate-map.js`. With real keys: `node tools/live-test.js` (Groq director + Gemini Q&A headless) and `node tools/live-room.js` (real server room). `tools/test-core.js` is legacy: its fixtures assume human impostors, so its role-based tests fail by design.
+- Tests: `npm test` here runs both of these: `node tools/test-rules.js` (rules, Q&A, text helpers, 52 checks) and `node tools/test-net.js` (server and protocol, 81 checks). Also `node tools/sim.js 3 7 --chat` (headless bot matches), `node tools/validate-map.js`. With real keys: `node tools/live-test.js` (Groq director + Gemini Q&A headless) and `node tools/live-room.js` (real server room). `tools/test-core.js` is legacy: its fixtures assume human impostors, so its role-based tests fail by design.
 - Server env: `PORT` (3000), `HOST` (0.0.0.0; use `127.0.0.1` for local-only), `LOG_DIR`, `DIRECTOR_DEBUG=1` to log every director decision.
 
 ## Known limitations

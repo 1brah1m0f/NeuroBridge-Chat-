@@ -13,15 +13,7 @@ import type {
 import { sanitizeAnswer, sanitizeName } from './sanitize';
 import { shuffle } from './util';
 import type { QuestionPicker } from './questions';
-import type {
-  AiPlanner,
-  AiTurnContext,
-  ChatSink,
-  PastRound,
-  PlayerRecord,
-  RoundLogger,
-  RoundResult,
-} from './types';
+import type { AiPlanner, AiTurnContext, ChatSink, PastRound, PlayerRecord, RoundLogger, RoundResult } from './types';
 
 export interface RoomConfig {
   roomId: string;
@@ -44,8 +36,18 @@ export interface RoomDeps {
 }
 
 const PALETTE = [
-  '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#0aa5a5',
-  '#c9a000', '#f032e6', '#7a9a01', '#9a6324', '#469990', '#808080',
+  '#e6194b',
+  '#3cb44b',
+  '#4363d8',
+  '#f58231',
+  '#911eb4',
+  '#0aa5a5',
+  '#c9a000',
+  '#f032e6',
+  '#7a9a01',
+  '#9a6324',
+  '#469990',
+  '#808080',
 ];
 
 interface RoundAnswer {
@@ -106,7 +108,10 @@ export class ChatRoom extends EventEmitter {
   private pastAuthors = new Map<number, RoundState['authors']>();
   private destroyed = false;
 
-  constructor(readonly cfg: RoomConfig, private deps: RoomDeps) {
+  constructor(
+    readonly cfg: RoomConfig,
+    private deps: RoomDeps,
+  ) {
     super();
   }
 
@@ -158,7 +163,12 @@ export class ChatRoom extends EventEmitter {
   authorize(token: unknown): PlayerRecord | undefined {
     if (typeof token !== 'string' || !token) return undefined;
     for (const p of this.players.values()) {
-      if (p.token && p.token.length === token.length && crypto.timingSafeEqual(Buffer.from(p.token), Buffer.from(token))) return p;
+      if (
+        p.token &&
+        p.token.length === token.length &&
+        crypto.timingSafeEqual(Buffer.from(p.token), Buffer.from(token))
+      )
+        return p;
     }
     return undefined;
   }
@@ -286,7 +296,15 @@ export class ChatRoom extends EventEmitter {
       answers: cur
         ? cur.slots.flatMap((s, i) =>
             s && s.text !== null
-              ? [{ playerId: s.playerId, name: s.name, color: this.players.get(s.playerId)!.color, text: s.text, order: i + 1 }]
+              ? [
+                  {
+                    playerId: s.playerId,
+                    name: s.name,
+                    color: this.players.get(s.playerId)!.color,
+                    text: s.text,
+                    order: i + 1,
+                  },
+                ]
               : [],
           )
         : [],
@@ -316,10 +334,21 @@ export class ChatRoom extends EventEmitter {
     }
 
     const startedAt = Date.now();
-    const turn: TurnState = { idx, playerId: p.id, startedAt, deadline: startedAt + this.cfg.turnMs, timers: [], lastTyping: 0 };
+    const turn: TurnState = {
+      idx,
+      playerId: p.id,
+      startedAt,
+      deadline: startedAt + this.cfg.turnMs,
+      timers: [],
+      lastTyping: 0,
+    };
     this.turn = turn;
     this.phase = 'PLAYER_TURN';
-    this.broadcast('turn_started', { playerId: p.id, deadline: turn.deadline, serverTime: startedAt } satisfies TurnStartedPayload);
+    this.broadcast('turn_started', {
+      playerId: p.id,
+      deadline: turn.deadline,
+      serverTime: startedAt,
+    } satisfies TurnStartedPayload);
     turn.timers.push(setTimeout(() => this.skipTurn(turn, 'timeout'), this.cfg.turnMs));
 
     if (p.kind === 'ai') void this.runAi(turn, p);
@@ -393,7 +422,15 @@ export class ChatRoom extends EventEmitter {
   }
 
   private recordSkip(idx: number, p: PlayerRecord, timedOut: boolean): void {
-    this.cur!.slots[idx] = { playerId: p.id, name: p.name, text: null, timedOut, delayMs: null, fallbackUsed: false, llmMs: null };
+    this.cur!.slots[idx] = {
+      playerId: p.id,
+      name: p.name,
+      text: null,
+      timedOut,
+      delayMs: null,
+      fallbackUsed: false,
+      llmMs: null,
+    };
   }
 
   private finishTurn(turn: TurnState): void {
@@ -431,7 +468,11 @@ export class ChatRoom extends EventEmitter {
       text: s!.text,
       timedOut: s!.timedOut,
     }));
-    this.past.push({ round: cur.round, question: cur.question, answers: answers.map(({ playerId, name, text }) => ({ playerId, name, text })) });
+    this.past.push({
+      round: cur.round,
+      question: cur.question,
+      answers: answers.map(({ playerId, name, text }) => ({ playerId, name, text })),
+    });
     this.pastAuthors.set(cur.round, cur.authors);
 
     this.deps.logger.logRound({
@@ -444,7 +485,14 @@ export class ChatRoom extends EventEmitter {
       question: cur.question,
       answers: cur.slots.map((s, i) => {
         const a = cur.authors.get(s!.playerId)!;
-        return { ...answers[i]!, authorType: a.kind, level: a.level, delayMs: s!.delayMs, fallbackUsed: s!.fallbackUsed, llmMs: s!.llmMs };
+        return {
+          ...answers[i]!,
+          authorType: a.kind,
+          level: a.level,
+          delayMs: s!.delayMs,
+          fallbackUsed: s!.fallbackUsed,
+          llmMs: s!.llmMs,
+        };
       }),
     });
 

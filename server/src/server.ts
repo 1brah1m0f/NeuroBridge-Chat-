@@ -91,9 +91,12 @@ export async function createChatServer(opts: ChatServerOptions): Promise<ChatSer
   const sink: ChatSink = {
     broadcast: (roomId, event, payload) => io.to(channel(roomId)).emit(event, payload),
     evict: (roomId, playerId) => {
-      void io.in(channel(roomId)).fetchSockets().then((socks) => {
-        for (const s of socks) if (s.data.playerId === playerId) s.leave(channel(roomId));
-      });
+      void io
+        .in(channel(roomId))
+        .fetchSockets()
+        .then((socks) => {
+          for (const s of socks) if (s.data.playerId === playerId) s.leave(channel(roomId));
+        });
     },
   };
   const manager = new ChatManager({ sink, ai: opts.ai, logger: opts.logger });
@@ -149,7 +152,8 @@ export async function createChatServer(opts: ChatServerOptions): Promise<ChatSer
     socket.on('submit_answer', (data: unknown, ack?: (r: SubmitAck) => void) => {
       const reply = (r: SubmitAck) => typeof ack === 'function' && ack(r);
       const room = manager.get(socket.data.roomId);
-      if (!room || !socket.data.playerId) return reply({ ok: false, error: sendError(socket, 'not_joined', 'Join first.') });
+      if (!room || !socket.data.playerId)
+        return reply({ ok: false, error: sendError(socket, 'not_joined', 'Join first.') });
       if (!limiter.allow()) return reply({ ok: false, error: sendError(socket, 'rate_limited', 'Too many requests.') });
       const text = isObj(data) ? data.text : undefined;
       const res = room.submit(socket.data.playerId, text);
@@ -161,7 +165,8 @@ export async function createChatServer(opts: ChatServerOptions): Promise<ChatSer
       const reply = (r: SetAiLevelAck) => typeof ack === 'function' && ack(r);
       if (!opts.allowLevelSelect) return reply({ ok: false, error: sendError(socket, 'unauthorized', 'Not allowed.') });
       const room = manager.get(socket.data.roomId);
-      if (!room || !socket.data.playerId) return reply({ ok: false, error: sendError(socket, 'not_joined', 'Join first.') });
+      if (!room || !socket.data.playerId)
+        return reply({ ok: false, error: sendError(socket, 'not_joined', 'Join first.') });
       if (!limiter.allow()) return reply({ ok: false, error: sendError(socket, 'rate_limited', 'Too many requests.') });
       const level = isObj(data) ? data.level : undefined;
       if (typeof level !== 'number' || !Number.isInteger(level) || level < 1 || level > 5) {

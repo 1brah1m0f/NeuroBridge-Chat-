@@ -86,6 +86,10 @@ const MIME = {
   '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.webmanifest': 'application/manifest+json',
 };
 const WIN_DEVICE = /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i;
+// Compared case-insensitively on Windows, where /LOGS/chat.jsonl opens the same file as /logs/chat.jsonl.
+const fold = (p) => (process.platform === 'win32' ? p.toLowerCase() : p);
+const PRIVATE_DIRS = [services.logDir, path.join(ROOT, 'server'), path.join(ROOT, 'tools', 'out'), path.join(ROOT, 'node_modules')].map((d) => fold(path.resolve(d)));
+const isPrivate = (filePath) => { const f = fold(filePath); return PRIVATE_DIRS.some((d) => f === d || f.startsWith(d + path.sep)); };
 
 function sendText(res, status, text, headers) {
   if (res.headersSent) { try { res.end(); } catch (e) { /* ignore */ } return; }
@@ -115,6 +119,8 @@ function serveStatic(req, res) {
   if (segments.some((s) => s.startsWith('.') || s.indexOf(':') >= 0 || WIN_DEVICE.test(s))) return sendText(res, 404, 'Not Found');
   const filePath = path.resolve(ROOT, rel);
   if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) return sendText(res, 403, 'Forbidden');
+  // Server-only data inside ROOT (chat logs with author types, server code and prompts, scratch output) is never served.
+  if (isPrivate(filePath)) return sendText(res, 404, 'Not Found');
 
   fs.stat(filePath, (err, st) => {
     if (err || !st) return sendText(res, 404, 'Not Found');
@@ -391,7 +397,9 @@ function onHello(client, m) {
   client.color = typeof m.color === 'string' && AS.COLOR_BY_ID[m.color] ? m.color : null;
   client.hat = typeof m.hat === 'string' && AS.HATS.indexOf(m.hat) >= 0 ? m.hat : 'none';
   client.hello = true;
-  client.agent = m.agent === true;
+  // The agent flag decides who receives observe() (with its private bot data), so it is fixed once the client
+  // is in a room: a human re-sending hello mid-match must not turn into an "agent".
+  if (!client.room) client.agent = m.agent === true;
   client.lang = m.lang === 'en' ? 'en' : 'az';
   send(client, { t: 'welcome', id: client.id });
 }

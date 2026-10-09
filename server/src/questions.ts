@@ -24,7 +24,11 @@ export class QuestionPicker {
   private used = new Set<string>();
   private pool: QuestionEntry[];
 
-  constructor(bank: QuestionEntry[], private language: string, private rng: Rng = Math.random) {
+  constructor(
+    bank: QuestionEntry[],
+    private language: string,
+    private rng: Rng = Math.random,
+  ) {
     this.pool = bank.filter((q) => typeof q.text[language] === 'string');
     if (this.pool.length === 0) throw new Error(`No questions for language "${language}"`);
   }

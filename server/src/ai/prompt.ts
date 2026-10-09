@@ -1,16 +1,17 @@
-import fs from 'node:fs';
 import { paths, type LevelConfig } from '../config';
+import { HotFile } from '../hotFile';
 import { forPrompt } from '../sanitize';
 import type { AiTurnContext } from '../types';
 import type { PersonaEntry } from './memory';
 
 const LANGUAGE_NAMES: Record<string, string> = { az: 'Azerbaijani', en: 'English', ru: 'Russian' };
 
-let cached: { mtime: number; text: string } | null = null;
+const templates = new Map<string, HotFile<string>>();
+/** The prompt template; edits on disk are picked up within a second, no restart needed. */
 export function loadTemplate(file = paths.prompt): string {
-  const m = fs.statSync(file).mtimeMs;
-  if (!cached || cached.mtime !== m) cached = { mtime: m, text: fs.readFileSync(file, 'utf8') };
-  return cached.text;
+  let t = templates.get(file);
+  if (!t) templates.set(file, (t = new HotFile(file, (text) => text)));
+  return t.get();
 }
 
 const HISTORY_ROUNDS = 5;
@@ -26,7 +27,8 @@ function formatHistory(ctx: AiTurnContext, own: PersonaEntry[]): string {
   const ownRecent = own.filter((e) => e.round < ctx.round).slice(-HISTORY_ROUNDS);
   if (ownRecent.length) {
     lines.push('YOUR earlier answers (stay consistent with these):');
-    for (const e of ownRecent) lines.push(`- Round ${e.round} | Q: ${forPrompt(e.question)} | you: ${forPrompt(e.text)}`);
+    for (const e of ownRecent)
+      lines.push(`- Round ${e.round} | Q: ${forPrompt(e.question)} | you: ${forPrompt(e.text)}`);
   }
   const others = ctx.pastRounds.filter((r) => r.round < ctx.round).slice(-HISTORY_ROUNDS);
   if (others.length) {

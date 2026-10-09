@@ -33,7 +33,9 @@ export function LevelPicker({ level, onChange }: Props) {
           </button>
         ))}
       </div>
-      <p className="level-hint">{current ? `${current.name}: ${current.hint}. Applies from the AI's next turn.` : ''}</p>
+      <p className="level-hint">
+        {current ? `${current.name}: ${current.hint}. Applies from the AI's next turn.` : ''}
+      </p>
     </fieldset>
   );
 }

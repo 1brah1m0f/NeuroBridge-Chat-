@@ -1,6 +1,6 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { HotFile } from './hotFile';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -60,25 +60,17 @@ export interface LevelConfig {
 
 /** Reads config/levels.json, re-reading when the file changes so tuning needs no restart. */
 export class LevelStore {
-  private cache: Record<string, LevelConfig> | null = null;
-  private mtime = 0;
+  private readonly source: HotFile<Record<string, LevelConfig>>;
 
-  constructor(private file = paths.levels) {}
+  constructor(file = paths.levels) {
+    this.source = new HotFile(file, (text) => JSON.parse(text) as Record<string, LevelConfig>);
+  }
 
   get(level: number): LevelConfig {
-    const all = this.load();
+    const all = this.source.get();
     const key = String(Math.min(5, Math.max(1, Math.round(level))));
     const cfg = all[key];
     if (!cfg) throw new Error(`levels.json has no entry for level ${key}`);
     return cfg;
-  }
-
-  private load(): Record<string, LevelConfig> {
-    const m = fs.statSync(this.file).mtimeMs;
-    if (!this.cache || m !== this.mtime) {
-      this.cache = JSON.parse(fs.readFileSync(this.file, 'utf8')) as Record<string, LevelConfig>;
-      this.mtime = m;
-    }
-    return this.cache;
   }
 }

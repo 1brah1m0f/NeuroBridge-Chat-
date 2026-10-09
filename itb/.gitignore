@@ -1,3 +1,6 @@
 .env
 logs/
 node_modules/
+# scratch output of tools/shot.js and one-off debug scripts (see docs/CONTRACT.md)
+tools/out/
+*.log

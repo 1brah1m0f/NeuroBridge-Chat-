@@ -349,6 +349,7 @@
       try { if (AS.Tasks.isOpen && AS.Tasks.isOpen()) AS.Tasks.close('leave'); } catch (e) { console.error(e); }
       try { if (AS.Tasks.reset) AS.Tasks.reset(); } catch (e) { console.error(e); }
     }
+    try { if (AS.HUD && AS.HUD.closeOverlay) AS.HUD.closeOverlay(); } catch (e) { console.error(e); }
     App.mode = null;
     App.room = null;
     App.status = null;
@@ -566,6 +567,11 @@
       App.phase = phase;
       setBodyAttr('data-phase', phase || '');
       if (phase !== 'lobby' && phase !== 'playing') App.view.me.moving = false;
+      // Task ids repeat between matches ("asteroids:0"), so mini-game progress from the last match must not carry
+      // over when "Play again" / "Return to lobby" starts a new one without leaving the room.
+      if ((phase === 'lobby' || phase === 'intro') && AS.Tasks && AS.Tasks.reset) {
+        try { AS.Tasks.reset(); } catch (e) { console.error(e); }
+      }
       emit('phase', phase, p0, snap);
     }
   }
