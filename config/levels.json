@@ -1,0 +1,82 @@
+{
+  "1": {
+    "name": "Rookie",
+    "temperature": 0.3,
+    "maxChars": 180,
+    "maxTokens": 120,
+    "delay": { "baseMs": 700, "perCharMs": 18, "jitter": 0.05, "slowChance": 0, "slowExtraMs": [0, 0], "minMs": 600, "maxMs": 4000 },
+    "typoProbability": 0,
+    "lowercaseProbability": 0,
+    "dropEndPunctuationProbability": 0,
+    "styleNotes": "Two or three complete, tidy sentences. Polite and balanced, a little textbook-like. No slang, no typos, no personal story. Stay slightly vague where a person would be specific.",
+    "fallbacks": {
+      "en": ["That is a good question. I would say something simple and familiar. It is hard to choose.", "I do not have a strong opinion on this. I usually like things that are calm and easy."],
+      "az": ["Yaxşı sualdır. Məncə sadə və tanış bir şey olar. Seçmək bir az çətindir.", "Bu barədə güclü fikrim yoxdur. Adətən sakit və rahat şeyləri sevirəm."],
+      "ru": ["Хороший вопрос. Думаю, это что-то простое и привычное. Выбрать довольно сложно.", "У меня нет чёткого мнения на этот счёт. Обычно мне нравятся спокойные и простые вещи."]
+    }
+  },
+  "2": {
+    "name": "Beginner",
+    "temperature": 0.5,
+    "maxChars": 140,
+    "maxTokens": 100,
+    "delay": { "baseMs": 900, "perCharMs": 30, "jitter": 0.12, "slowChance": 0.02, "slowExtraMs": [1000, 2500], "minMs": 800, "maxMs": 6000 },
+    "typoProbability": 0.02,
+    "lowercaseProbability": 0.05,
+    "dropEndPunctuationProbability": 0.1,
+    "styleNotes": "Short casual tone, one or two sentences, minimal personal detail, rare slang. A bit tidy and non-committal.",
+    "fallbacks": {
+      "en": ["Not sure, I think the usual one is fine.", "Hard to say honestly, I like simple things."],
+      "az": ["Əmin deyiləm, adi olanı yaxşıdır məncə.", "Düzü demək çətindir, sadə şeyləri sevirəm."],
+      "ru": ["Не уверен, думаю, обычный вариант подойдёт.", "Честно, сложно сказать, мне нравятся простые вещи."]
+    }
+  },
+  "3": {
+    "name": "Average",
+    "temperature": 0.7,
+    "maxChars": 120,
+    "maxTokens": 90,
+    "delay": { "baseMs": 1200, "perCharMs": 55, "jitter": 0.3, "slowChance": 0.06, "slowExtraMs": [1500, 4000], "minMs": 900, "maxMs": 9000 },
+    "typoProbability": 0.07,
+    "lowercaseProbability": 0.15,
+    "dropEndPunctuationProbability": 0.35,
+    "styleNotes": "Normal player. Casual, opinionated, light slang matching the chat, an occasional small imperfection. Specifics present but modest.",
+    "fallbacks": {
+      "en": ["hmm not sure tbh, probably the usual", "hard to pick, whatever's easiest i guess", "idk, depends on my mood lol"],
+      "az": ["hmm bilmirəm düzü, yəqin adi olan", "seçmək çətindir, hansı asandırsa də", "bilmirəm, əhvaldan asılıdır"],
+      "ru": ["хм не знаю честно, наверное как обычно", "сложно выбрать, что попроще наверное", "хз, зависит от настроения"]
+    }
+  },
+  "4": {
+    "name": "Advanced",
+    "temperature": 0.85,
+    "maxChars": 110,
+    "maxTokens": 80,
+    "delay": { "baseMs": 1500, "perCharMs": 75, "jitter": 0.45, "slowChance": 0.12, "slowExtraMs": [2000, 6000], "minMs": 1000, "maxMs": 14000 },
+    "typoProbability": 0.15,
+    "lowercaseProbability": 0.4,
+    "dropEndPunctuationProbability": 0.55,
+    "styleNotes": "Mirror the other players' length, punctuation, capitalisation and slang. Include a small concrete personal detail or opinion. Occasional typo, trailing off, or a mild joke. Vary mood between rounds.",
+    "fallbacks": {
+      "en": ["ugh this one's hard, ill go with the usual", "no idea lol", "honestly whatever i had yesterday"],
+      "az":["ay bu çətindi, adi olanı deyim", "heç bilmirəm ee", "düzü dünən nə idisə o"],
+      "ru": ["ух сложный, пусть будет как обычно", "без понятия лол", "честно что было вчера то и ладно"]
+    }
+  },
+  "5": {
+    "name": "Master",
+    "temperature": 0.95,
+    "maxChars": 100,
+    "maxTokens": 70,
+    "delay": { "baseMs": 1800, "perCharMs": 90, "jitter": 0.6, "slowChance": 0.18, "slowExtraMs": [3000, 9000], "minMs": 1100, "maxMs": 20000 },
+    "typoProbability": 0.2,
+    "lowercaseProbability": 0.5,
+    "dropEndPunctuationProbability": 0.7,
+    "styleNotes": "Indistinguishable from the best human. Consistent fake persona. Sometimes lazy and short, sometimes emotional. Occasionally give a slightly wrong or unpopular answer. Never the most polished answer in the room.",
+    "fallbacks": {
+      "en": ["idk man", "lol hard one... skip", "eh same as always i guess", "hmm honestly no clue"],
+      "az": ["bilmirəm ee", "lol çətin sualdı", "eh həmişəki kimi də", "hmm düzü heç ideyam yoxdu"],
+      "ru": ["хз чел", "лол сложно", "эх как всегда наверное", "хмм вообще без идей"]
+    }
+  }
+}

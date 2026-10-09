@@ -1,0 +1,1 @@
+[{"eval":"Math.random = AS.util.rng(7); openGame('wires'); 'opened'"},{"wait":500},{"drag":[289,203,685,540,14]},{"wait":150},{"drag":[289,315,685,427,14]},{"wait":150},{"shot":"tools/out/wires-mid.png"},{"drag":[289,427,685,203,14]},{"wait":150},{"drag":[289,540,685,315,14]},{"wait":150},{"wait":1300},{"shot":"tools/out/wires-done.png"}]

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task test</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/tasks.css">
+  <style>
+    body { background: radial-gradient(ellipse at center, #1a2250, #05070f); }
+    #bar { position: fixed; left: 8px; top: 8px; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; max-width: 98vw; }
+    #bar button { font-size: 12px; padding: 4px 8px; border-radius: 8px; border: 1px solid #3a4690; background: #151b3d; color: #fff; cursor: pointer; }
+    #log { position: fixed; left: 8px; bottom: 8px; z-index: 100; color: #9fe; font: 12px monospace; }
+  </style>
+</head>
+<body>
+  <!-- Usage: tasktest.html?game=wires&lang=en&sab=reactor&hide=1 (hide=1 hides the button bar for clean screenshots) -->
+  <div id="app"><div id="task-layer" class="layer"></div></div>
+  <div id="bar"></div>
+  <div id="log"></div>
+  <script src="../js/core/ns.js"></script>
+  <script src="../js/core/constants.js"></script>
+  <script src="../js/core/i18n.js"></script>
+  <script src="../js/client/audio.js"></script>
+  <script src="../js/client/art.js"></script>
+  <script src="../js/client/tasks/taskhost.js"></script>
+  <script src="../js/client/tasks/tasks-a.js"></script>
+  <script src="../js/client/tasks/tasks-b.js"></script>
+  <script src="../js/client/tasks/tasks-c.js"></script>
+  <script src="../js/client/tasks/sabotage.js"></script>
+  <script>
+    const q = new URLSearchParams(location.search);
+    if (q.get('lang')) AS.i18n.setLang(q.get('lang'));
+    const sab = q.get('sab');
+    // Fake snapshot: an active sabotage (if ?sab=kind) so sabotage panels stay open.
+    window.FAKE = { phase: 'playing', sabotage: sab ? { kind: sab, timer: 30, panels: {} } : null, players: [], self: { tasks: [] } };
+    AS.Tasks.getState = () => window.FAKE;
+    AS.Tasks.send = (a) => { console.log('SEND ' + JSON.stringify(a)); log('send ' + JSON.stringify(a)); };
+    AS.Tasks.onComplete = (info) => { console.log('TASK_COMPLETE ' + info.game); log('complete ' + info.game); };
+    AS.Tasks.onClose = (info, done) => { console.log('TASK_CLOSE ' + info.game + ' completed=' + done); };
+    function log(s) { document.getElementById('log').textContent = s; }
+    function openGame(id) {
+      const isSab = id.indexOf('fix_') === 0;
+      const kind = isSab ? id.slice(4) : null;
+      if (isSab && !window.FAKE.sabotage) window.FAKE.sabotage = { kind, timer: 30, panels: {} };
+      AS.Tasks.open({ game: id, taskId: 'test_' + id, step: 0, steps: 1, stationId: 'st_test', room: 'electrical',
+        panelId: isSab ? 'p_' + kind : undefined, sabotage: kind || undefined, params: { room: 'shields', roomName: 'Shields' } });
+    }
+    const bar = document.getElementById('bar');
+    if (q.get('hide') !== '1') {
+      for (const id of AS.Tasks.list()) {
+        const b = document.createElement('button'); b.textContent = id; b.onclick = () => openGame(id); bar.appendChild(b);
+      }
+    }
+    console.log('REGISTERED ' + AS.Tasks.list().join(','));
+    if (q.get('game')) openGame(q.get('game'));
+  </script>
+</body>
+</html>

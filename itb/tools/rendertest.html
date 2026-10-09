@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Renderer test</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    #bar { position: fixed; left: 8px; top: 8px; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; max-width: 70vw; }
+    #bar button { font: 700 12px Nunito, sans-serif; padding: 4px 9px; border-radius: 8px; border: 1px solid #3a4690; background: rgba(21, 27, 61, 0.85); color: #fff; cursor: pointer; }
+    #bar button.on { background: #2a7cff; }
+    #info { position: fixed; left: 8px; bottom: 8px; z-index: 100; color: #9fe; font: 12px monospace; text-shadow: 0 1px 2px #000; pointer-events: none; }
+    #overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; background: rgba(3, 5, 14, 0.55); }
+    #overlay.show { display: flex; }
+    .mm-panel { padding: 14px; border-radius: 22px; background: rgba(10, 16, 40, 0.86); border: 2px solid rgba(130, 150, 255, 0.3); box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5); }
+    .mm-panel canvas { display: block; }
+    .cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; border-radius: 22px; background: #0b1024; border: 2px solid rgba(130, 150, 255, 0.3); }
+    .cam-grid canvas { display: block; border-radius: 12px; border: 2px solid #26305a; }
+  </style>
+</head>
+<body>
+  <!-- Usage: rendertest.html?scene=crew|impostor|lights|ghost|doors|doorsv|lobby|vent|fx|minimap|camera|perf
+       &lang=en  &hide=1 (no UI bar)  &fake=1 (force faked snapshots even when AS.Game exists)  &fixture=1 (force the built-in map)
+       perf: &frames=240  → prints CPU/flush timings with and without the static chunk cache -->
+  <div id="app">
+    <canvas id="world"></canvas>
+    <div id="hud" class="layer"></div>
+  </div>
+  <div id="overlay"></div>
+  <div id="bar"></div>
+  <div id="info"></div>
+
+  <script src="../js/core/ns.js"></script>
+  <script src="../js/core/constants.js"></script>
+  <script src="../js/core/i18n.js"></script>
+  <script src="../js/core/map.js"></script>
+  <script src="../js/core/geometry.js"></script>
+  <script src="../js/core/game.js"></script>
+  <script src="../js/core/bots.js"></script>
+  <script src="../js/client/art.js"></script>
+  <script src="../js/client/props.js"></script>
+  <script src="../js/client/renderer.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const q = new URLSearchParams(location.search);
+    if (q.get('lang')) AS.i18n.setLang(q.get('lang'));
+    const SCENE = q.get('scene') || 'crew';
+    const U = AS.util;
+    if (q.get('vh')) { AS.T.VIEW_HEIGHT = +q.get('vh'); AS.T.VIEW_HEIGHT_SMALL = Math.round(+q.get('vh') * 0.78); }
+
+    // ------------------------------------------------------------------ built-in fixture map (used only when map.js is missing)
+    const FIXTURE = {
+      id: 'rendertest_fixture', nameKey: 'map.caspian', width: 3200, height: 2900,
+      rooms: [
+        { id: 'medbay', nameKey: 'room.medbay', rect: [300, 300, 560, 460], floor: 'white', wall: 'white' },
+        { id: 'messhall', nameKey: 'room.messhall', rect: [1100, 260, 900, 700], floor: 'steel', wall: 'metal' },
+        { id: 'reactor', nameKey: 'room.reactor', rect: [2250, 300, 620, 560], floor: 'reactor', wall: 'orange' },
+        { id: 'electrical', nameKey: 'room.electrical', rect: [1200, 1220, 620, 440], floor: 'dark', wall: 'dark' },
+        { id: 'greenhouse', nameKey: 'room.greenhouse', rect: [2250, 1120, 620, 520], floor: 'grass', wall: 'green' },
+        { id: 'admin', nameKey: 'room.admin', rect: [300, 1080, 560, 420], floor: 'blue', wall: 'blue', extra: [[400, 1500, 360, 120]] },
+        { id: 'lobby', nameKey: 'room.lobby', rect: [400, 2200, 1000, 440], floor: 'dropship', lobby: true },
+      ],
+      halls: [
+        { rect: [850, 460, 260, 160], floor: 'hall' },
+        { rect: [1990, 460, 270, 160], floor: 'hall' },
+        { rect: [1430, 950, 160, 280], floor: 'hall' },
+        { rect: [2480, 850, 160, 280], floor: 'hall' },
+        { rect: [1810, 1340, 450, 160], floor: 'hall' },
+        { rect: [360, 750, 160, 340], floor: 'hall' },
+      ],
+      props: [
+        { type: 'table_round', x: 1550, y: 560, r: 80, button: true, block: true, room: 'messhall' },
+        { type: 'table_round', x: 1300, y: 780, r: 80, block: true, room: 'messhall' },
+        { type: 'table_round', x: 1800, y: 780, r: 80, block: true, room: 'messhall' },
+        { type: 'window', x: 1550, y: 260, w: 260, h: 60, wall: true, room: 'messhall' },
+        { type: 'pipes', x: 1230, y: 260, w: 140, h: 60, wall: true, room: 'messhall' },
+        { type: 'crate', x: 1940, y: 900, w: 70, h: 70, block: true, room: 'messhall' },
+        { type: 'barrel', x: 1150, y: 330, r: 28, block: true, room: 'messhall' },
+        { type: 'bed', x: 420, y: 420, w: 150, h: 70, block: true, room: 'medbay' },
+        { type: 'bed', x: 420, y: 560, w: 150, h: 70, block: true, room: 'medbay' },
+        { type: 'scanner_pad', x: 700, y: 600, r: 55, floor: true, room: 'medbay' },
+        { type: 'sample_station', x: 740, y: 370, w: 130, h: 60, block: true, room: 'medbay' },
+        { type: 'light_panel', x: 560, y: 300, w: 90, h: 60, wall: true, room: 'medbay' },
+        { type: 'reactor_core', x: 2560, y: 590, r: 110, block: true, room: 'reactor' },
+        { type: 'handprint', x: 2340, y: 300, w: 60, h: 50, wall: true, room: 'reactor' },
+        { type: 'handprint', x: 2790, y: 300, w: 60, h: 50, wall: true, room: 'reactor' },
+        { type: 'pipes', x: 2560, y: 300, w: 220, h: 70, wall: true, room: 'reactor' },
+        { type: 'electrical_box', x: 1290, y: 1220, w: 80, h: 60, wall: true, room: 'electrical' },
+        { type: 'wire_panel', x: 1650, y: 1220, w: 60, h: 40, wall: true, room: 'electrical' },
+        { type: 'light_panel', x: 1760, y: 1220, w: 90, h: 60, wall: true, room: 'electrical' },
+        { type: 'server_rack', x: 1300, y: 1560, w: 70, h: 40, block: true, room: 'electrical' },
+        { type: 'server_rack', x: 1400, y: 1560, w: 70, h: 40, block: true, room: 'electrical' },
+        { type: 'crate_stack', x: 1730, y: 1590, w: 110, h: 90, block: true, room: 'electrical' },
+        { type: 'hazard_floor', x: 1510, y: 1440, w: 160, h: 100, floor: true, room: 'electrical' },
+        { type: 'tree', x: 2350, y: 1260, r: 45, block: true, room: 'greenhouse' },
+        { type: 'tree', x: 2790, y: 1530, r: 45, block: true, room: 'greenhouse' },
+        { type: 'plant_bed', x: 2560, y: 1400, w: 240, h: 80, block: true, room: 'greenhouse' },
+        { type: 'o2_tank', x: 2800, y: 1260, r: 30, block: true, room: 'greenhouse' },
+        { type: 'admin_table', x: 580, y: 1290, w: 240, h: 140, block: true, room: 'admin' },
+        { type: 'monitor_wall', x: 720, y: 1080, w: 200, h: 60, wall: true, room: 'admin' },
+        { type: 'locker', x: 820, y: 1460, w: 60, h: 30, block: true, room: 'admin' },
+        { type: 'rug', x: 900, y: 2420, w: 300, h: 160, floor: true, room: 'lobby' },
+        { type: 'dropship_seat', x: 520, y: 2290, w: 60, h: 60, block: true, room: 'lobby' },
+        { type: 'dropship_seat', x: 620, y: 2290, w: 60, h: 60, block: true, room: 'lobby' },
+        { type: 'dropship_seat', x: 1180, y: 2290, w: 60, h: 60, block: true, room: 'lobby' },
+        { type: 'dropship_seat', x: 1280, y: 2290, w: 60, h: 60, block: true, room: 'lobby' },
+        { type: 'laptop', x: 1300, y: 2540, w: 60, h: 40, room: 'lobby' },
+        { type: 'crate', x: 480, y: 2570, w: 70, h: 70, block: true, room: 'lobby' },
+        { type: 'window', x: 900, y: 2200, w: 320, h: 60, wall: true, room: 'lobby' },
+      ],
+      stations: [
+        { id: 'st_scan', x: 700, y: 600, room: 'medbay' },
+        { id: 'st_sample', x: 740, y: 430, room: 'medbay' },
+        { id: 'st_wires_e', x: 1290, y: 1280, room: 'electrical' },
+        { id: 'st_core', x: 2560, y: 740, room: 'reactor' },
+        { id: 'st_plants', x: 2560, y: 1480, room: 'greenhouse' },
+      ],
+      taskDefs: [],
+      vents: [
+        { id: 'v1', x: 780, y: 690, room: 'medbay', links: ['v2'] },
+        { id: 'v2', x: 790, y: 1430, room: 'admin', links: ['v1'] },
+        { id: 'v3', x: 1700, y: 1430, room: 'electrical', links: ['v4'] },
+        { id: 'v4', x: 2400, y: 1560, room: 'greenhouse', links: ['v3'] },
+        { id: 'v5', x: 2790, y: 790, room: 'reactor', links: ['v6'] },
+        { id: 'v6', x: 1190, y: 900, room: 'messhall', links: ['v5'] },
+      ],
+      button: { x: 1550, y: 560 },
+      panels: [
+        { id: 'lights', kind: 'lights', x: 1760, y: 1280, room: 'electrical', game: 'fix_lights' },
+        { id: 'reactor_a', kind: 'reactor', x: 2340, y: 360, room: 'reactor', game: 'fix_reactor' },
+        { id: 'reactor_b', kind: 'reactor', x: 2790, y: 360, room: 'reactor', game: 'fix_reactor' },
+      ],
+      doors: [
+        { id: 'd_medbay', room: 'medbay', rect: [860, 460, 20, 160], orient: 'v' },
+        { id: 'd_elec', room: 'electrical', rect: [1430, 1200, 160, 20], orient: 'h' },
+        { id: 'd_reactor', room: 'reactor', rect: [2230, 460, 20, 160], orient: 'v' },
+        { id: 'd_green_t', room: 'greenhouse', rect: [2480, 1100, 160, 20], orient: 'h' },
+        { id: 'd_green_l', room: 'greenhouse', rect: [2230, 1340, 20, 160], orient: 'v' },
+        { id: 'd_admin', room: 'admin', rect: [360, 1060, 160, 20], orient: 'h' },
+      ],
+      cameras: [
+        { id: 'cam1', x: 980, y: 540, nameKey: 'room.hallway' }, { id: 'cam2', x: 1510, y: 1090, nameKey: 'room.hallway' },
+        { id: 'cam3', x: 2120, y: 540, nameKey: 'room.hallway' }, { id: 'cam4', x: 2030, y: 1420, nameKey: 'room.hallway' },
+      ],
+      consoles: [{ id: 'admin', kind: 'admin', x: 580, y: 1390, room: 'admin' }],
+      spawns: {
+        meeting: Array.from({ length: 12 }, (_, i) => [Math.round(1550 + Math.cos((i / 12) * 6.283) * 150), Math.round(560 + Math.sin((i / 12) * 6.283) * 150)]),
+        lobby: Array.from({ length: 12 }, (_, i) => [520 + (i % 6) * 150, 2400 + Math.floor(i / 6) * 120]),
+      },
+    };
+    const realMap = AS.MAPS && AS.MAPS.caspian && q.get('fixture') !== '1';
+    const MAP = realMap ? AS.MAPS.caspian : FIXTURE;
+    if (!AS.i18n.has('room.medbay')) {
+      AS.i18n.add({
+        az: { 'room.medbay': 'Tibb otağı', 'room.messhall': 'Yeməkxana', 'room.reactor': 'Reaktor', 'room.electrical': 'Elektrik', 'room.greenhouse': 'İstixana', 'room.admin': 'İdarəetmə', 'room.lobby': 'Gəmi', 'room.hallway': 'Dəhliz' },
+        en: { 'room.medbay': 'MedBay', 'room.messhall': 'Mess Hall', 'room.reactor': 'Reactor', 'room.electrical': 'Electrical', 'room.greenhouse': 'Greenhouse', 'room.admin': 'Admin', 'room.lobby': 'Dropship', 'room.hallway': 'Hallway' },
+      });
+    }
+
+    // ------------------------------------------------------------------ geometry (real AS.Geo, or a tiny fixture stand-in)
+    function FixtureGeo(map) {
+      const G = 10, cols = Math.ceil(map.width / G), rows = Math.ceil(map.height / G);
+      const floor = new Uint8Array(cols * rows), door = new Int16Array(cols * rows).fill(-1);
+      const mark = (r, arr, v) => {
+        for (let y = Math.floor(r[1] / G); y < Math.ceil((r[1] + r[3]) / G); y++)
+          for (let x = Math.floor(r[0] / G); x < Math.ceil((r[0] + r[2]) / G); x++) if (x >= 0 && y >= 0 && x < cols && y < rows) arr[y * cols + x] = v;
+      };
+      map.rooms.forEach((r) => { mark(r.rect, floor, 1); (r.extra || []).forEach((e) => mark(e, floor, 1)); });
+      map.halls.forEach((h) => mark(h.rect, floor, 1));
+      map.doors.forEach((d, i) => mark(d.rect, door, i));
+      let closed = new Set();
+      const cell = (x, y) => { const cx = Math.floor(x / G), cy = Math.floor(y / G); return cx < 0 || cy < 0 || cx >= cols || cy >= rows ? -1 : cy * cols + cx; };
+      this.cols = cols; this.rows = rows; this.cell = G; this.floor = floor;
+      this.isFloor = (x, y) => { const c = cell(x, y); return c >= 0 && floor[c] === 1; };
+      this.isOpen = (x, y) => { const c = cell(x, y); return c >= 0 && floor[c] === 1 && !(door[c] >= 0 && closed.has(map.doors[door[c]].id)); };
+      this.setDoors = (ids) => { closed = new Set(ids || []); };
+      this.castRay = (x, y, a, max) => { const dx = Math.cos(a), dy = Math.sin(a); let d = 0; while (d < max) { d += 3; if (!this.isOpen(x + dx * d, y + dy * d)) return Math.max(0, d - 3); } return max; };
+      this.lineOfSight = (x1, y1, x2, y2) => { const d = Math.hypot(x2 - x1, y2 - y1); return this.castRay(x1, y1, Math.atan2(y2 - y1, x2 - x1), d) >= d - 3; };
+      this.visibility = (x, y, R, n) => { n = n || 360; const out = new Float32Array(n * 2); for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, d = this.castRay(x, y, a, R); out[i * 2] = x + Math.cos(a) * d; out[i * 2 + 1] = y + Math.sin(a) * d; } return out; };
+      this.roomAt = (x, y) => { for (const r of map.rooms) { if (U.pointInRect(x, y, r.rect)) return r.id; for (const e of r.extra || []) if (U.pointInRect(x, y, e)) return r.id; } return null; };
+      this.canStand = (x, y) => this.isOpen(x, y) && this.isOpen(x - 20, y) && this.isOpen(x + 20, y) && this.isOpen(x, y - 20) && this.isOpen(x, y + 20);
+      this.nearestStandable = (x, y) => { for (let r = 0; r < 400; r += 10) for (let a = 0; a < 6.28; a += 0.4) { const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; if (this.canStand(px, py)) return [px, py]; } return [x, y]; };
+      this.boundary = null; // renderer computes its own fallback boundary
+    }
+    const GEO = AS.Geo ? AS.Geo.build(MAP) : new FixtureGeo(MAP);
+
+    // ------------------------------------------------------------------ App stub
+    const App = new U.Emitter();
+    Object.assign(App, {
+      snap: null, prevSnap: null, map: MAP, geo: GEO, myId: 'p1', mode: 'local',
+      view: { me: null, players: {}, cam: { x: 0, y: 0, zoom: 1 }, highlights: {}, time: 0 },
+      worldToScreen: (x, y) => AS.Renderer.worldToScreen(x, y), screenToWorld: (x, y) => AS.Renderer.screenToWorld(x, y),
+    });
+    window.App = App;
+    const canvas = document.getElementById('world');
+    AS.Renderer.init(App, canvas);
+
+    // ------------------------------------------------------------------ helpers to place things on any map
+    const room = (id) => MAP.rooms.find((r) => r.id === id) || MAP.rooms[0];
+    const center = (id) => { const r = room(id).rect; return [r[0] + r[2] / 2, r[1] + r[3] / 2]; };
+    const stand = (x, y) => (GEO.canStand && GEO.canStand(x, y) ? [x, y] : GEO.nearestStandable ? GEO.nearestStandable(x, y) : [x, y]);
+    const at = (id, fx, fy) => { const r = room(id).rect; return stand(r[0] + r[2] * fx, r[1] + r[3] * fy); };
+    const near = (x, y, dx, dy) => stand(x + dx, y + dy);
+    const inRoom = (list, id) => (list || []).filter((o) => o.room === id);
+
+    const PEOPLE = [
+      { id: 'p1', name: AS.t('render.you') === 'Sən' ? 'Orxan' : 'Orxan', color: 'cyan', hat: 'papaq' },
+      { id: 'p2', name: 'Nova', color: 'red', hat: 'crown' },
+      { id: 'p3', name: 'Kosmo', color: 'blue', hat: 'none' },
+      { id: 'p4', name: 'Aysel', color: 'pink', hat: 'flower' },
+      { id: 'p5', name: 'Murad', color: 'green', hat: 'sprout' },
+      { id: 'p6', name: 'Leyla', color: 'yellow', hat: 'catears' },
+      { id: 'p7', name: 'Tural', color: 'orange', hat: 'nar' },
+      { id: 'p8', name: 'Pixel', color: 'purple', hat: 'wizard' },
+    ];
+    function player(i, pos, extra) {
+      const b = PEOPLE[i];
+      return Object.assign({ id: b.id, name: b.name, color: b.color, hat: b.hat, isBot: i > 0, isHost: i === 0, alive: true, left: false,
+        x: pos[0], y: pos[1], facing: i % 2 ? -1 : 1, moving: false, tp: 0, scanning: false }, extra || {});
+    }
+    function baseSnap(phase, players, extra) {
+      const me = players.find((p) => p.id === 'p1');
+      return Object.assign({
+        v: 1, t: 0, phase, mapId: MAP.id, hostId: 'p1', you: 'p1', timer: null, countdown: null, settings: AS.sanitizeSettings({}),
+        players, bodies: [], self: { role: me.role || 'crew', alive: me.alive !== false, visionRadius: AS.T.BASE_VISION, killCooldown: 0, emergencyLeft: 1,
+          emergencyCooldown: 0, sabotageCooldown: 0, doorCooldowns: {}, inVent: null, holding: null, tasks: [] },
+        taskProgress: 0.3, sabotage: null, doors: {}, meeting: null, ejection: null, result: null,
+      }, extra || {});
+    }
+    // walkers: players that pace back and forth (walk animation)
+    let walkers = [];
+
+    function fakeScene(name) {
+      walkers = [];
+      let snap, hl = {};
+      const S = (id) => (MAP.stations || []).find((s) => s.room === id);
+      switch (name) {
+        case 'lobby': {
+          const sp = MAP.spawns.lobby;
+          const ps = PEOPLE.map((_, i) => player(i, stand(sp[i][0], sp[i][1])));
+          snap = baseSnap('lobby', ps, { taskProgress: null });
+          walkers.push({ id: 'p3', a: ps[2].x - 90, b: ps[2].x + 90 });
+          break;
+        }
+        case 'impostor':
+        case 'vent': {
+          const c = center('messhall');
+          const ps = [
+            player(0, at('messhall', 0.42, 0.72), { role: 'impostor' }),
+            player(1, at('messhall', 0.62, 0.62), { role: 'impostor' }),
+            player(2, at('messhall', 0.33, 0.86)),
+            player(3, at('messhall', 0.75, 0.88)),
+            player(4, at('messhall', 0.2, 0.4)),
+            player(5, at('messhall', 0.82, 0.3)),
+            player(6, at('electrical', 0.5, 0.5)),
+            player(7, at('reactor', 0.5, 0.8)),
+          ];
+          snap = baseSnap('playing', ps);
+          snap.self.role = 'impostor';
+          snap.self.visionRadius = AS.T.BASE_VISION * 1.5;
+          hl = { target: 'p3' };
+          const v = inRoom(MAP.vents, 'messhall')[0];
+          if (name === 'vent' && v) {
+            ps[0].x = v.x; ps[0].y = v.y; ps[0].inVent = true; snap.self.inVent = v.id; hl = {};
+          } else if (v) hl.vent = v.id;
+          walkers.push({ id: 'p5', a: ps[4].x - 80, b: ps[4].x + 120 });
+          break;
+        }
+        case 'lights': {
+          const pn = (MAP.panels || []).find((p) => p.kind === 'lights');
+          const mePos = pn ? stand(pn.x, pn.y + 40) : at('electrical', 0.5, 0.5);
+          const ps = [
+            player(0, mePos),
+            player(1, near(mePos[0], mePos[1], -70, 60)),
+            player(2, at('electrical', 0.2, 0.8)),
+            player(3, at('messhall', 0.5, 0.5)),
+          ];
+          snap = baseSnap('playing', ps, { sabotage: { kind: 'lights', timer: null, panels: {} } });
+          snap.self.visionRadius = Math.max(AS.T.MIN_VISION, AS.T.BASE_VISION * AS.T.LIGHTS_OFF_MULT);
+          if (pn) hl = { panel: pn.id };
+          break;
+        }
+        case 'ghost': {
+          const ps = [
+            player(0, at('messhall', 0.3, 0.75), { alive: false }),
+            player(1, at('messhall', 0.55, 0.8)),
+            player(2, at('messhall', 0.72, 0.55)),
+            player(3, at('messhall', 0.2, 0.45), { alive: false }),
+            player(4, at('messhall', 0.85, 0.85)),
+            player(5, at('medbay', 0.5, 0.5)),
+          ];
+          snap = baseSnap('playing', ps);
+          snap.self.alive = false;
+          const bp = at('messhall', 0.42, 0.9);
+          snap.bodies = [{ id: 'p6', x: bp[0], y: bp[1], color: 'yellow' }];
+          walkers.push({ id: 'p4', a: ps[3].x - 60, b: ps[3].x + 100 });
+          break;
+        }
+        case 'doors':
+        case 'doorsv': {
+          const want = name === 'doors' ? 'h' : 'v';
+          const prefer = name === 'doors' ? ['electrical', 'admin', 'greenhouse'] : ['medbay', 'reactor', 'greenhouse'];
+          let d = null;
+          for (const rid of prefer) { d = (MAP.doors || []).find((x) => x.room === rid && (x.orient || (x.rect[2] >= x.rect[3] ? 'h' : 'v')) === want); if (d) break; }
+          d = d || (MAP.doors || []).find((x) => (x.orient || (x.rect[2] >= x.rect[3] ? 'h' : 'v')) === want) || (MAP.doors || [])[0];
+          const cx = d.rect[0] + d.rect[2] / 2, cy = d.rect[1] + d.rect[3] / 2;
+          const cands = want === 'h' ? [[cx + 60, cy + 150], [cx + 60, cy - 130]] : [[cx + 150, cy + 40], [cx - 150, cy + 40]];
+          let mePos = null;
+          for (const c of cands) { if (GEO.roomAt(c[0], c[1]) !== d.room && GEO.isFloor(c[0], c[1])) { mePos = stand(c[0], c[1]); break; } }
+          mePos = mePos || stand(cands[0][0], cands[0][1]);
+          const ps = [player(0, mePos), player(2, near(mePos[0], mePos[1], -90, 40)), player(4, at(d.room, 0.5, 0.5))];
+          const doors = {};
+          (MAP.doors || []).forEach((x) => { if (x.room === d.room) doors[x.id] = 8; });
+          snap = baseSnap('playing', ps, { doors });
+          break;
+        }
+        case 'crew':
+        default: {
+          const pad = (MAP.props || []).find((p) => p.type === 'scanner_pad');
+          const ps = [
+            player(0, at('medbay', 0.62, 0.55)),
+            player(1, at('medbay', 0.22, 0.86)),
+            player(2, at('medbay', 0.9, 0.35)),
+            player(3, pad ? stand(pad.x, pad.y) : at('medbay', 0.7, 0.7), { scanning: true }),
+            player(4, at('messhall', 0.5, 0.5)),
+            player(5, at('reactor', 0.5, 0.5)),
+          ];
+          snap = baseSnap('playing', ps);
+          const bp = at('medbay', 0.45, 0.88);
+          snap.bodies = [{ id: 'p7', x: bp[0], y: bp[1], color: 'orange' }];
+          const st = (MAP.stations || []).filter((s) => s.room === 'medbay');
+          let best = null, bd = 1e9;
+          for (const s of st) { if (pad && Math.hypot(s.x - pad.x, s.y - pad.y) < 30) continue; const d = Math.hypot(s.x - ps[0].x, s.y - ps[0].y); if (d < bd) { bd = d; best = s; } }
+          hl = { body: 'p7' };
+          if (best) hl.station = best.id;
+          walkers.push({ id: 'p3', a: ps[2].x - 140, b: ps[2].x });
+          break;
+        }
+      }
+      return { snap, hl };
+    }
+
+    // ------------------------------------------------------------------ live game (AS.Game present) — scene set up through the real simulation
+    let game = null;
+    function liveScene(name) {
+      const g = new AS.Game({ mapId: MAP.id, settings: AS.sanitizeSettings({ impostors: 2, killCooldown: 10 }), seed: 7, isServer: false });
+      const me = g.addPlayer({ id: 'p1', name: PEOPLE[0].name, color: PEOPLE[0].color, hat: PEOPLE[0].hat });
+      for (let i = 1; i < 8; i++) g.addPlayer({ name: PEOPLE[i].name, color: PEOPLE[i].color, hat: PEOPLE[i].hat, isBot: true });
+      const myId = me.id;
+      App.myId = myId;
+      if (name !== 'lobby') {
+        g.setRolePreference(myId, name === 'impostor' || name === 'vent' ? 'impostor' : 'crew');
+        g.applyAction(g.hostId, { type: 'start' });
+        for (let i = 0; i < 30 * 12 && g.phase !== 'playing'; i++) g.tick(AS.T.TICK);
+      }
+      g.drainEvents();
+      return g;
+    }
+
+    // ------------------------------------------------------------------ scene boot
+    const sc = fakeScene(SCENE === 'minimap' || SCENE === 'camera' || SCENE === 'perf' || SCENE === 'fx' ? 'crew' : SCENE);
+    let useLive = false;
+    if (AS.Game && q.get('fake') !== '1' && q.get('live') === '1') {
+      try { game = liveScene(SCENE); useLive = true; } catch (e) { console.warn('live game failed, using fake snapshots: ' + e.message); game = null; }
+    }
+    App.snap = sc.snap;
+    App.view.highlights = sc.hl;
+    const meSnap = sc.snap.players.find((p) => p.id === 'p1');
+    App.view.me = { x: meSnap.x, y: meSnap.y, facing: 1, moving: false };
+    if (q.get('mx')) { App.view.me.x = meSnap.x = +q.get('mx'); App.view.me.y = meSnap.y = +q.get('my'); }
+    if (q.get('nofog') === '1') { sc.snap.self.alive = true; sc.snap.phase = 'ended'; }
+    for (const p of sc.snap.players) if (p.id !== 'p1' && p.x != null) App.view.players[p.id] = { x: p.x, y: p.y, facing: p.facing, moving: false };
+    console.log('[rendertest] scene=' + SCENE + ' map=' + MAP.id + (realMap ? ' (real)' : ' (fixture)') + ' geo=' + (AS.Geo ? 'AS.Geo' : 'fixture') +
+      ' art=' + !!AS.Art + ' props=' + !!AS.Props + ' live=' + useLive);
+
+    // ------------------------------------------------------------------ overlays: minimap / cameras
+    const overlay = document.getElementById('overlay');
+    let mmCanvas = null, camCanvases = [];
+    function hiCanvas(w, h) {
+      const c = document.createElement('canvas');
+      const d = Math.min(2, devicePixelRatio || 1);
+      c.width = Math.round(w * d); c.height = Math.round(h * d); c.style.width = w + 'px'; c.style.height = h + 'px';
+      c.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+      c._w = w; c._h = h;
+      return c;
+    }
+    if (SCENE === 'minimap') {
+      const w = Math.min(innerWidth * 0.78, 1100), h = Math.min(innerHeight * 0.78, 700);
+      const panel = document.createElement('div'); panel.className = 'mm-panel';
+      mmCanvas = hiCanvas(Math.round(w), Math.round(h));
+      panel.appendChild(mmCanvas); overlay.appendChild(panel); overlay.classList.add('show');
+    }
+    if (SCENE === 'camera') {
+      const grid = document.createElement('div'); grid.className = 'cam-grid';
+      const cw = Math.round(Math.min((innerWidth * 0.86) / 2, ((innerHeight * 0.82) / 2) * (16 / 9))), ch = Math.round((cw * 9) / 16);
+      for (let i = 0; i < 4; i++) { const c = hiCanvas(cw, ch); grid.appendChild(c); camCanvases.push(c); }
+      overlay.appendChild(grid); overlay.classList.add('show');
+    }
+
+    // ------------------------------------------------------------------ UI bar
+    if (q.get('hide') !== '1') {
+      const bar = document.getElementById('bar');
+      for (const s of ['lobby', 'crew', 'impostor', 'vent', 'lights', 'ghost', 'doors', 'doorsv', 'fx', 'minimap', 'camera', 'perf']) {
+        const b = document.createElement('button'); b.textContent = s; if (s === SCENE) b.className = 'on';
+        b.onclick = () => { const u = new URLSearchParams(location.search); u.set('scene', s); location.search = u.toString(); };
+        bar.appendChild(b);
+      }
+      const toggle = document.createElement('button'); toggle.textContent = 'doors↕';
+      toggle.onclick = () => { const s = App.snap; if (Object.keys(s.doors).length) s.doors = {}; else (MAP.doors || []).forEach((d) => (s.doors[d.id] = 8)); };
+      bar.appendChild(toggle);
+      const kill = document.createElement('button'); kill.textContent = 'kill fx';
+      kill.onclick = () => fireFx();
+      bar.appendChild(kill);
+    }
+    const info = document.getElementById('info');
+
+    // ------------------------------------------------------------------ fx scene: fire events
+    function fireFx() {
+      const me = App.view.me;
+      const tgt = App.snap.players.find((p) => p.id === 'p3');
+      if (tgt) {
+        App.emit('event', { type: 'kill', killer: 'p2', victim: 'p3', x: tgt.x, y: tgt.y });
+        App.snap.bodies.push({ id: 'p3', x: tgt.x, y: tgt.y, color: tgt.color });
+        tgt.alive = false; delete tgt.x; delete tgt.y;
+      }
+      App.emit('event', { type: 'taskStep', to: 'p1', task: 't', step: 1, done: true });
+      const v = (MAP.vents || []).reduce((b, v) => (!b || Math.hypot(v.x - me.x, v.y - me.y) < Math.hypot(b.x - me.x, b.y - me.y) ? v : b), null);
+      if (v) App.emit('event', { type: 'vent', player: 'p2', vent: v.id, action: 'enter', x: v.x, y: v.y });
+    }
+    if (SCENE === 'fx') setTimeout(fireFx, 700);
+
+    // ------------------------------------------------------------------ perf
+    function perf() {
+      const N = +(q.get('frames') || 240);
+      const R = AS.Renderer;
+      const meStart = Object.assign({}, App.view.me);
+      const pts = [center('medbay'), center('messhall'), center('reactor'), center('greenhouse'), center('electrical'), center('admin')];
+      function pathAt(k) { const f = k * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(f)), t = f - i; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]; }
+      const px = canvas.getContext('2d');
+      function run(label, noCache, flush) {
+        R.debug.noCache = noCache;
+        const times = [];
+        for (let i = 0; i < N; i++) {
+          const p = pathAt(i / (N - 1));
+          App.view.me.x = p[0]; App.view.me.y = p[1]; App.view.me.moving = true;
+          const t0 = performance.now();
+          R.render(1 / 60);
+          if (flush) px.getImageData(0, 0, 1, 1);
+          times.push(performance.now() - t0);
+        }
+        times.sort((a, b) => a - b);
+        const avg = times.reduce((a, b) => a + b, 0) / times.length;
+        const res = label + ': avg ' + avg.toFixed(2) + ' ms, p50 ' + times[Math.floor(N * 0.5)].toFixed(2) + ', p95 ' + times[Math.floor(N * 0.95)].toFixed(2) + ', max ' + times[N - 1].toFixed(2) + ' (chunk builds total ' + R.stats.built + ')';
+        console.log('[perf] ' + res);
+        return res;
+      }
+      // warm-up pass builds the chunk cache along the path
+      run('warmup (cache cold)', false, true);
+      const a = run('cached + flush', false, true);
+      const b = run('NO cache + flush', true, true);
+      const c = run('cached cpu-only', false, false);
+      R.debug.noCache = false;
+      Object.assign(App.view.me, meStart);
+      info.textContent = a + ' | ' + b;
+      // rAF fps over 2 s
+      let frames = 0; const tStart = performance.now();
+      function tick() { frames++; if (performance.now() - tStart < 2000) requestAnimationFrame(tick); else console.log('[perf] rAF fps over 2s (with render loop): ' + (frames / 2).toFixed(1) + ' at ' + innerWidth + 'x' + innerHeight + ' dpr ' + devicePixelRatio); }
+      requestAnimationFrame(tick);
+      return { a, b, c };
+    }
+    window.runPerf = perf;
+
+    // ------------------------------------------------------------------ main loop
+    let last = performance.now(), fpsAcc = 0, fpsN = 0, fps = 0;
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      App.view.time += dt;
+      // pacing walkers
+      for (const w of walkers) {
+        const p = App.snap.players.find((x) => x.id === w.id);
+        const v = App.view.players[w.id];
+        if (!p || !v) continue;
+        const span = w.b - w.a, k = (App.view.time * 120) % (span * 2);
+        const nx = w.a + (k < span ? k : span * 2 - k);
+        v.facing = k < span ? 1 : -1; v.moving = true; v.x = nx; v.y = p.y;
+        p.x = nx;
+      }
+      if (useLive && game && q.get('run') === '1') {
+        game.tick(dt);
+        const evs = game.drainEvents();
+        App.snap = game.snapshotFor(App.myId);
+        for (const ev of evs) { App.emit('event', ev); App.emit('ev:' + ev.type, ev); }
+        const mp = App.snap.players.find((p) => p.id === App.myId);
+        if (mp && mp.x != null) Object.assign(App.view.me, { x: mp.x, y: mp.y, facing: mp.facing, moving: mp.moving });
+        for (const p of App.snap.players) if (p.id !== App.myId && p.x != null) App.view.players[p.id] = { x: p.x, y: p.y, facing: p.facing, moving: p.moving };
+      }
+      App.emit('frame', dt, App.view.time);
+      AS.Renderer.render(dt);
+      if (mmCanvas) {
+        const g = mmCanvas.getContext('2d');
+        g.clearRect(0, 0, mmCanvas._w, mmCanvas._h);
+        const markers = (MAP.stations || []).slice(0, 5).map((s) => ({ x: s.x, y: s.y, kind: 'task' }));
+        const lp = (MAP.panels || []).find((p) => p.kind === 'reactor');
+        if (lp) markers.push({ x: lp.x, y: lp.y, kind: 'sabotage' });
+        AS.Renderer.drawMinimap(g, mmCanvas._w, mmCanvas._h, {
+          markers, me: true, labels: true,
+          dots: { messhall: 3, electrical: 1, medbay: 2, reactor: 4 },
+          sabotageRooms: ['reactor'], doorRooms: ['electrical'],
+        });
+      }
+      if (camCanvases.length) {
+        const cams = (MAP.cameras || []).slice(0, 4);
+        camCanvases.forEach((c, i) => {
+          const cm = cams[i] || { x: center('messhall')[0], y: center('messhall')[1] };
+          AS.Renderer.renderCamera(c.getContext('2d'), c._w, c._h, cm.x, cm.y, 900);
+        });
+      }
+      fpsAcc += dt; fpsN++;
+      if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
+      if (SCENE !== 'perf') info.textContent = SCENE + ' | ' + fps.toFixed(0) + ' fps | render ' + AS.Renderer.stats.ms.toFixed(2) + ' ms | chunks ' + AS.Renderer.stats.chunks + ' | ents ' + AS.Renderer.stats.entities;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    if (SCENE === 'perf') setTimeout(perf, 400);
+  })();
+  </script>
+</body>
+</html>

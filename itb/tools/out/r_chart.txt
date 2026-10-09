@@ -1,0 +1,5 @@
+[console.log] REGISTERED wires,swipe,chart,steer,plants,sample,fix_lights,fix_comms,fix_o2,fix_reactor
+[eval] open
+[eval] after fail: {"seg":0,"t":0.4949563469423653,"solved":false}
+[done] page errors: 0
+RESULT chart: not completed

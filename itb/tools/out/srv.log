@@ -1,0 +1,12 @@
+
+  * AMONG STARS - server işləyir / server is running
+  --------------------------------------------------------------
+  Bu kompüterdə / On this computer:      http://localhost:3017/
+  (HOST=127.0.0.1: yalnız bu kompüter / only this computer)
+  --------------------------------------------------------------
+  Dayandırmaq üçün / To stop: Ctrl+C
+
+[16:09:21] listening on 127.0.0.1:3017
+[16:09:23] [ZNUN] host is now AgentX
+[16:09:23] [ZNUN] created by AgentX (127.0.0.1), 1 open
+[16:09:27] [ZNUN] AgentX disconnected - room closed (0 open)

@@ -1,0 +1,70 @@
+[2J[H[1m[36m★ AMONG STARS — agentlərin canlı vəziyyəti[0m[2m   3:25:42 PM   (hər 2 san yenilənir, çıxmaq: Ctrl+C)[0m
+
+[1mAGENT      VƏZİYYƏT          SON HƏRƏKƏT   NƏ EDİR[0m
+[36mapp       [0m [33m● işləyir[0m         1m10s əvvəl   “Now the big one: `js/client/main.js` (AS.App).”
+[36mart       [0m [35m✎ böyük fayl yazır[0m 20m12s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36maudio     [0m [33m● işləyir[0m         51s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mcore      [0m [33m● işləyir[0m         56s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mflow      [0m [33m● işləyir[0m         43s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mhud       [0m [33m● işləyir[0m         3s əvvəl      [2moxuyur…[0m
+[36mmap       [0m [33m● işləyir[0m         5s əvvəl      [2moxuyur…[0m
+[36mmenu      [0m [33m● işləyir[0m         29s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mprops     [0m [35m✎ böyük fayl yazır[0m 20m15s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mrenderer  [0m [35m✎ böyük fayl yazır[0m 4m53s əvvəl   “Only net.js exists so far, so I'll write the renderer fully defensiv…
+[36mtasks-a   [0m [35m✎ böyük fayl yazır[0m 20m09s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mtasks-b   [0m [35m✎ böyük fayl yazır[0m 20m06s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mtasks-c   [0m [35m✎ böyük fayl yazır[0m 3m39s əvvəl   “Now I'll write tasks-c.js with the shared art kit and the four mini-…
+
+[1mBitib: 0/13[0m[2m  (bots agenti core bitəndən sonra başlayır)[0m
+
+[1mOYUN FAYLLARI (15, ən təzələri yuxarıda):[0m
+  tools/status.js                      5.9 KB[2m   3:25:37 PM[0m
+  js/core/geometry.js                 33.4 KB[2m   3:23:58 PM[0m
+  server/server.js                    24.5 KB[2m   3:22:22 PM[0m
+  server/ws.js                        12.7 KB[2m   3:20:57 PM[0m
+  js/client/net.js                    15.7 KB[2m   3:20:13 PM[0m
+  css/tasks.css                        0.1 KB[2m   3:02:33 PM[0m
+  docs/CONTRACT.md                    28.7 KB[2m   3:00:17 PM[0m
+  tools/tasktest.html                  3.3 KB[2m   2:56:40 PM[0m
+  tools/shot.js                       10.5 KB[2m   2:56:39 PM[0m
+  js/client/tasks/taskhost.js         10.5 KB[2m   2:55:49 PM[0m
+  index.html                           2.5 KB[2m   2:55:10 PM[0m
+  css/base.css                         8.6 KB[2m   2:55:09 PM[0m
+  js/core/i18n.js                      9.6 KB[2m   2:54:24 PM[0m
+  js/core/constants.js                 7.7 KB[2m   2:53:47 PM[0m
+  js/core/ns.js                        3.7 KB[2m   2:53:14 PM[0m
+[2J[H[1m[36m★ AMONG STARS — agentlərin canlı vəziyyəti[0m[2m   3:25:44 PM   (hər 2 san yenilənir, çıxmaq: Ctrl+C)[0m
+
+[1mAGENT      VƏZİYYƏT          SON HƏRƏKƏT   NƏ EDİR[0m
+[36mapp       [0m [33m● işləyir[0m         1m12s əvvəl   “Now the big one: `js/client/main.js` (AS.App).”
+[36mart       [0m [35m✎ böyük fayl yazır[0m 20m14s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36maudio     [0m [33m● işləyir[0m         53s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mcore      [0m [33m● işləyir[0m         58s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mflow      [0m [33m● işləyir[0m         45s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mhud       [0m [33m● işləyir[0m         5s əvvəl      [2moxuyur…[0m
+[36mmap       [0m [33m● işləyir[0m         7s əvvəl      [2moxuyur…[0m
+[36mmenu      [0m [33m● işləyir[0m         31s əvvəl     [2mdüşünür / növbəti addımı yazır…[0m
+[36mprops     [0m [35m✎ böyük fayl yazır[0m 20m17s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mrenderer  [0m [35m✎ böyük fayl yazır[0m 4m55s əvvəl   “Only net.js exists so far, so I'll write the renderer fully defensiv…
+[36mtasks-a   [0m [35m✎ böyük fayl yazır[0m 20m12s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mtasks-b   [0m [35m✎ böyük fayl yazır[0m 20m08s əvvəl  [2mdüşünür / növbəti addımı yazır…[0m
+[36mtasks-c   [0m [35m✎ böyük fayl yazır[0m 3m41s əvvəl   “Now I'll write tasks-c.js with the shared art kit and the four mini-…
+
+[1mBitib: 0/13[0m[2m  (bots agenti core bitəndən sonra başlayır)[0m
+
+[1mOYUN FAYLLARI (15, ən təzələri yuxarıda):[0m
+  tools/status.js                      5.9 KB[2m   3:25:37 PM[0m
+  js/core/geometry.js                 33.4 KB[2m   3:23:58 PM[0m
+  server/server.js                    24.5 KB[2m   3:22:22 PM[0m
+  server/ws.js                        12.7 KB[2m   3:20:57 PM[0m
+  js/client/net.js                    15.7 KB[2m   3:20:13 PM[0m
+  css/tasks.css                        0.1 KB[2m   3:02:33 PM[0m
+  docs/CONTRACT.md                    28.7 KB[2m   3:00:17 PM[0m
+  tools/tasktest.html                  3.3 KB[2m   2:56:40 PM[0m
+  tools/shot.js                       10.5 KB[2m   2:56:39 PM[0m
+  js/client/tasks/taskhost.js         10.5 KB[2m   2:55:49 PM[0m
+  index.html                           2.5 KB[2m   2:55:10 PM[0m
+  css/base.css                         8.6 KB[2m   2:55:09 PM[0m
+  js/core/i18n.js                      9.6 KB[2m   2:54:24 PM[0m
+  js/core/constants.js                 7.7 KB[2m   2:53:47 PM[0m
+  js/core/ns.js                        3.7 KB[2m   2:53:14 PM[0m

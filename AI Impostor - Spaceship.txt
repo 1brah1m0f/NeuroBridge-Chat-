@@ -1,0 +1,34 @@
+AI Impostor: Space Ship — Game Rules
+1. Game Objective
+The game takes place on a spaceship. Real players must complete ship tasks and identify the AI ​​Impostors hiding among them. Meanwhile, the AIs mimic human behavior while attempting to eliminate both real players and other AI players.
+With each new level, the AIs' behavior becomes more realistic and closer to human conduct, making them increasingly difficult to identify.
+2. Roles
+Real Players (Crewmates): They perform spaceship tasks, observe events, and try to identify the AI ​​Impostors.
+AI Impostor: These are artificial intelligence players that act like humans and appear to be performing tasks, but can commit sabotage and eliminate other players.
+Key Feature: AI players recognize each other's identities at the start of the game. However, they can eliminate both real humans and other AI players. Real players, on the other hand, do not know beforehand which participants are AIs.
+3. Rules
+Before the game begins, real players and AI Impostors are positioned on the spaceship.
+Real players perform tasks related to electricity, navigation, communications, and other systems to keep the spaceship operational. AIs pose as real players, participate in tasks, join conversations, and try to avoid arousing suspicion.
+AIs can eliminate real humans and other AI players, as well as sabotage ship systems.
+When a player is eliminated, their body can be discovered and reported.
+The game pauses when a body is found or an emergency meeting is called. Surviving players discuss the situation and vote on whom they suspect.
+The player selected by the vote is ejected from the spaceship. Their identity—whether they were a real human or an AI—may be revealed.
+Players who have been eliminated or ejected cannot participate in the main stages of the game.
+4. Gameplay
+Start: Real players and AIs are placed on the spaceship. AIs recognize each other, while humans do not know their identities.
+Tasks: Real players complete ship tasks, while AIs act like humans and operate covertly.
+Events: AIs can eliminate players and commit acts of sabotage. Players observe suspicious behavior. Meeting and voting: Players share their suspicions, hold discussions, and vote to eliminate the participant they believe to be an AI.
+Next stage: The game continues, and with each new level, the AIs' ability to mimic human behavior improves.
+Game end: The game continues until either the humans or the AIs meet their victory conditions.
+
+5. Victory conditions
+Real players win if:
+They complete all the ship's essential tasks;
+They identify and eliminate all active AI Impostors through voting. AI Impostors win when:
+They eliminate all real players;
+The number of active AI Impostors equals or exceeds the number of surviving real players;
+Real players fail to resolve a critical sabotage within the allotted time.
+It is also possible for AIs to eliminate one another. In this case, the number of remaining participants and other victory conditions are recalculated.
+6. Core Game Concept
+The game's key feature is the artificial intelligence's ability to mimic human behavior. Identifying the AIs is easier in the early levels but becomes more difficult in later ones. Real players must not only complete tasks but also analyze the behavior, decisions, and reactions of other participants during discussions.
+Main Objective: Protect the spaceship, uncover the AI ​​Impostors, and compete against increasingly intelligent AI in each new level.
