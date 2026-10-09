@@ -1,7 +1,0 @@
-[console.log] REGISTERED wires,swipe,chart,steer,plants,sample,fix_lights,fix_comms,fix_o2,fix_reactor
-[eval] open
-[eval] released off-center: {"solved":false,"locked":false}
-[console.log] TASK_COMPLETE steer
-[console.log] TASK_CLOSE steer completed=true
-[done] page errors: 0
-RESULT steer: COMPLETED
